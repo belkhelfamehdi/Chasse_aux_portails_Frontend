@@ -71,7 +71,7 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit }) 
                 {/* Profile Picture Icon */}
                 <div className="flex justify-center mb-6">
                     <div className="flex flex-col items-center">
-                        <div className="w-16 h-16 bg-teal-100 rounded-lg flex items-center justify-center mb-2">
+                        <div className="flex items-center justify-center w-16 h-16 mb-2 bg-teal-100 rounded-lg">
                             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path 
                                     d="M12 2L15.09 8.26L22 9L17 14L18.18 21L12 17.77L5.82 21L7 14L2 9L8.91 8.26L12 2Z" 
@@ -84,7 +84,7 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit }) 
                             </svg>
                         </div>
                         {/* Small edit icon */}
-                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center -mt-3 ml-8">
+                        <div className="flex items-center justify-center w-6 h-6 ml-8 -mt-3 bg-blue-500 rounded-full">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path 
                                     d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" 

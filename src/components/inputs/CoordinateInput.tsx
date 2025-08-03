@@ -28,7 +28,7 @@ const CoordinateInput: React.FC<CoordinateInputProps> = ({
                         value={latitudeValue}
                         onChange={(e) => onLatitudeChange(e.target.value)}
                         required={required}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-600 placeholder-gray-400 focus:outline-none focus:border-gray-400 focus:bg-white transition-colors"
+                        className="w-full px-3 py-2 text-gray-600 placeholder-gray-400 transition-colors bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-gray-400 focus:bg-white"
                     />
                 </div>
                 <div>
@@ -39,7 +39,7 @@ const CoordinateInput: React.FC<CoordinateInputProps> = ({
                         value={longitudeValue}
                         onChange={(e) => onLongitudeChange(e.target.value)}
                         required={required}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-600 placeholder-gray-400 focus:outline-none focus:border-gray-400 focus:bg-white transition-colors"
+                        className="w-full px-3 py-2 text-gray-600 placeholder-gray-400 transition-colors bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-gray-400 focus:bg-white"
                     />
                 </div>
             </div>

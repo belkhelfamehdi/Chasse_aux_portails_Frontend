@@ -24,9 +24,9 @@ const ModalDemo: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-            <div className="bg-white p-8 rounded-lg shadow-lg">
-                <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+        <div className="flex items-center justify-center min-h-screen bg-gray-100">
+            <div className="p-8 bg-white rounded-lg shadow-lg">
+                <h1 className="mb-6 text-2xl font-bold text-center text-gray-800">
                     Chasse aux Portails - Modales
                 </h1>
                 

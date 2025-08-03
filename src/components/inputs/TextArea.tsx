@@ -22,9 +22,9 @@ const TextArea: React.FC<TextAreaProps> = ({
     return (
         <div className={`w-full ${className}`}>
             {label && (
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
                     {label}
-                    {required && <span className="text-red-500 ml-1">*</span>}
+                    {required && <span className="ml-1 text-red-500">*</span>}
                 </label>
             )}
             <textarea
@@ -33,7 +33,7 @@ const TextArea: React.FC<TextAreaProps> = ({
                 onChange={(e) => onChange(e.target.value)}
                 required={required}
                 rows={rows}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 placeholder-gray-400 focus:outline-none focus:border-gray-400 focus:bg-white transition-colors resize-vertical"
+                className="w-full px-3 py-2 text-gray-600 placeholder-gray-400 transition-colors border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:border-gray-400 focus:bg-white resize-vertical"
             />
         </div>
     );

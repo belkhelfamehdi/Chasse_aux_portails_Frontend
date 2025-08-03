@@ -118,9 +118,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     </div>
                     
                     <div>
-                        <span className="text-gray-700 font-medium">{label}</span>
+                        <span className="font-medium text-gray-700">{label}</span>
                         {selectedFile && (
-                            <div className="text-sm text-green-600 mt-1">
+                            <div className="mt-1 text-sm text-green-600">
                                 Selected: {selectedFile.name}
                             </div>
                         )}

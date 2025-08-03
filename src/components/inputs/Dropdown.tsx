@@ -59,14 +59,14 @@ const Dropdown: React.FC<DropdownProps> = ({
     return (
         <div className={`relative w-full ${className}`} ref={dropdownRef}>
             {label && (
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
                     {label}
-                    {required && <span className="text-red-500 ml-1">*</span>}
+                    {required && <span className="ml-1 text-red-500">*</span>}
                 </label>
             )}
             <button
                 type="button"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-left text-gray-600 focus:outline-none focus:border-gray-400 focus:bg-white transition-colors flex items-center justify-between"
+                className="flex items-center justify-between w-full px-3 py-2 text-left text-gray-600 transition-colors bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-gray-400 focus:bg-white"
                 onClick={() => setIsOpen(!isOpen)}
                 onKeyDown={handleKeyDown}
                 aria-haspopup="listbox"
@@ -86,7 +86,7 @@ const Dropdown: React.FC<DropdownProps> = ({
             </button>
 
             {isOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                <div className="absolute z-10 w-full mt-1 overflow-auto bg-white border border-gray-300 rounded-lg shadow-lg max-h-60">
                     <div className="py-1">
                         {options.map((option) => (
                             <button

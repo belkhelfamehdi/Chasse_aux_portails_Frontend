@@ -13,11 +13,11 @@ const Modal: React.FC<ModalProps> = ({ children, isOpen, onClose, title, hideHea
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center w-full h-full bg-black/40">
-            <div className="relative flex flex-col bg-white shadow-lg rounded-lg h-96 w-96 overflow-hidden">
+            <div className="relative flex flex-col overflow-hidden bg-white rounded-lg shadow-lg h-96 w-96">
                 {/* Modal Header */}
                 {!hideHeader && (
                     <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                        <h1 className="md:text-lg font-medium text-gray-900">{title}</h1>
+                        <h1 className="font-medium text-gray-900 md:text-lg">{title}</h1>
                     </div>
                 )}
 

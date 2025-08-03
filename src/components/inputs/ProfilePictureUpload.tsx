@@ -116,7 +116,7 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
                         <img
                             src={previewImage}
                             alt="Profile"
-                            className="w-full h-full object-cover"
+                            className="object-cover w-full h-full"
                         />
                     ) : (
                         <div className="flex flex-col items-center justify-center w-full h-full text-gray-400">
@@ -130,7 +130,7 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
                                     strokeLinejoin="round"
                                 />
                             </svg>
-                            {size === 'lg' && <span className="text-xs mt-1">Photo</span>}
+                            {size === 'lg' && <span className="mt-1 text-xs">Photo</span>}
                         </div>
                     )}
                 </button>
@@ -138,7 +138,7 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
                 {/* Edit button overlay */}
                 <button
                     type="button"
-                    className="absolute bottom-0 right-3 bg-gray-600 text-white rounded-full w-6 h-6 flex items-center justify-center transition-colors"
+                    className="absolute bottom-0 flex items-center justify-center w-6 h-6 text-white transition-colors bg-gray-600 rounded-full right-3"
                     onClick={openFileDialog}
                     title="Change photo"
                 >
@@ -160,7 +160,7 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
                     <button
                         type="button"
                         onClick={removeImage}
-                        className="text-xs text-red-600 hover:text-red-800 font-medium"
+                        className="text-xs font-medium text-red-600 hover:text-red-800"
                     >
                         Supprimer
                     </button>
