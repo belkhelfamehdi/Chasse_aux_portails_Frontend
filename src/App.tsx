@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/Home/DashboardPage';
+import CitiesPage from './pages/Home/CitiesPage';
+
 
 interface LoginFormData {
   email: string;
@@ -16,7 +19,7 @@ function App() {
   };
 
   return (
-    <LoginPage onLogin={handleLogin} />
+    <DashboardPage />
   );
 }
 
