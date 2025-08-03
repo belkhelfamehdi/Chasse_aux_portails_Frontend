@@ -2,9 +2,13 @@ import React from 'react';
 import Layout from '../../components/Layout';
 import CitiesContent from '../../components/CitiesContent';
 
-const CitiesPage: React.FC = () => {
+interface CitiesPageProps {
+  onLogout?: () => void;
+}
+
+const CitiesPage: React.FC<CitiesPageProps> = ({ onLogout }) => {
   return (
-    <Layout title="Gestion des villes" subtitle="Gérez les villes et leurs zones">
+    <Layout title="Gestion des villes" subtitle="Gérez les villes et leurs zones" onLogout={onLogout}>
       <CitiesContent />
     </Layout>
   );

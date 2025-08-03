@@ -5,7 +5,7 @@ import { MapPinIcon, UsersIcon, MapIcon } from '@heroicons/react/24/outline';
 const mockStats = {
   totalCities: 150,
   totalPOIs: 2350,
-  admins: 875
+  totalAdmins: 25
 };
 
 const mockRecentActivities = [
@@ -87,7 +87,7 @@ const DashboardContent: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Admins</p>
-              <p className="text-xl font-semibold text-gray-900">{mockStats.admins}</p>
+              <p className="text-xl font-semibold text-gray-900">{mockStats.totalAdmins}</p>
             </div>
           </div>
         </div>

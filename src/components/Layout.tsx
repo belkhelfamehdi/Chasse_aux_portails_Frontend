@@ -1,14 +1,38 @@
 import React, { type ReactNode } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { HomeIcon, MapIcon, MapPinIcon, UsersIcon, Cog6ToothIcon } from '@heroicons/react/24/solid';
+import { ArrowRightStartOnRectangleIcon } from '@heroicons/react/24/outline';
 import Logo from '../assets/logo.png';
 
 interface LayoutProps {
     children: ReactNode;
     title: string;
     subtitle?: string;
+    onLogout?: () => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, title, subtitle = "Welcome back" }) => {
+const Layout: React.FC<LayoutProps> = ({ children, title, subtitle = "Welcome back", onLogout }) => {
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const navigationItems = [
+        { path: '/dashboard', icon: HomeIcon, label: 'Dashboard' },
+        { path: '/cities', icon: MapIcon, label: 'Villes' },
+        { path: '/pois', icon: MapPinIcon, label: 'POIs' },
+        { path: '/admins', icon: UsersIcon, label: 'Admins' },
+        { path: '/settings', icon: Cog6ToothIcon, label: 'Paramètres' },
+    ];
+
+    const handleNavigation = (path: string) => {
+        navigate(path);
+    };
+
+    const handleLogout = () => {
+        if (onLogout) {
+            onLogout();
+        }
+    };
+
     return (
         <div className="flex min-h-screen bg-gray-100">
             {/* Sidebar */}
@@ -17,40 +41,41 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle = "Welcome ba
                     <img src={Logo} alt="Logo" className="w-24 h-auto" />
                 </div>
 
-                <nav className="px-6 pb-6">
+                <nav className="px-6 pb-6 flex-1">
                     <ul className="space-y-2">
-                        <li>
-                            <button className="flex items-center w-full px-4 py-3 space-x-3 rounded-lg text-primary bg-primary/10">
-                                <HomeIcon className="w-5 h-auto" />
-                                <span>Dashboard</span>
-                            </button>
-                        </li>
-                        <li>
-                            <button className="flex items-center w-full px-4 py-3 space-x-3 text-left text-gray-600 rounded-lg hover:text-primary hover:bg-gray-50">
-                                <MapIcon className="w-5 h-auto" />
-                                <span>Cities</span>
-                            </button>
-                        </li>
-                        <li>
-                            <button className="flex items-center w-full px-4 py-3 space-x-3 text-left text-gray-600 rounded-lg hover:text-primary hover:bg-gray-50">
-                                <MapPinIcon className="w-5 h-auto" />
-                                <span>POIs</span>
-                            </button>
-                        </li>
-                        <li>
-                            <button className="flex items-center w-full px-4 py-3 space-x-3 text-left text-gray-600 rounded-lg hover:text-primary hover:bg-gray-50">
-                                <UsersIcon className="w-5 h-auto" />
-                                <span>Admins</span>
-                            </button>
-                        </li>
-                        <li>
-                            <button className="flex items-center w-full px-4 py-3 space-x-3 text-left text-gray-600 rounded-lg hover:text-primary hover:bg-gray-50">
-                                <Cog6ToothIcon className="w-5 h-auto" />
-                                <span>Settings</span>
-                            </button>
-                        </li>
+                        {navigationItems.map((item) => {
+                            const Icon = item.icon;
+                            const isActive = location.pathname === item.path;
+                            
+                            return (
+                                <li key={item.path}>
+                                    <button 
+                                        onClick={() => handleNavigation(item.path)}
+                                        className={`flex items-center w-full px-4 py-3 space-x-3 rounded-lg transition-colors ${
+                                            isActive 
+                                                ? 'text-primary bg-primary/10' 
+                                                : 'text-gray-600 hover:text-primary hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        <Icon className="w-5 h-auto" />
+                                        <span>{item.label}</span>
+                                    </button>
+                                </li>
+                            );
+                        })}
                     </ul>
                 </nav>
+
+                {/* Logout Button */}
+                <div className="px-6 pb-6">
+                    <button 
+                        onClick={handleLogout}
+                        className="flex items-center w-full px-4 py-3 space-x-3 text-left text-gray-600 rounded-lg hover:text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                        <ArrowRightStartOnRectangleIcon className="w-5 h-auto" />
+                        <span>Déconnexion</span>
+                    </button>
+                </div>
             </div>
 
             {/* Main Content */}

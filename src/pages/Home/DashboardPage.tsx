@@ -2,9 +2,13 @@ import React from 'react';
 import Layout from '../../components/Layout';
 import DashboardContent from '../../components/DashboardContent';
 
-const DashboardPage: React.FC = () => {
+interface DashboardPageProps {
+  onLogout?: () => void;
+}
+
+const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   return (
-    <Layout title="Chasse aux portails" subtitle="Welcome back">
+    <Layout title="Chasse aux portails" subtitle="Welcome back" onLogout={onLogout}>
       <DashboardContent />
     </Layout>
   );

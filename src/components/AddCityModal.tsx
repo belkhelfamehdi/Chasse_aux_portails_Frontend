@@ -17,45 +17,57 @@ interface AddCityModalProps {
 
 interface CityFormData {
     name: string;
-    description: string;
-    latitude: string;
-    longitude: string;
-    email: string;
-    role: string;
+    country: string;
+    description?: string;
+    coordinates?: {
+        latitude: number;
+        longitude: number;
+    };
+    status: 'active' | 'inactive';
 }
 
 const AddCityModal: React.FC<AddCityModalProps> = ({ isOpen, onClose, onSubmit }) => {
-    const [formData, setFormData] = useState<CityFormData>({
+    const [formData, setFormData] = useState({
         name: '',
+        country: '',
         description: '',
         latitude: '',
         longitude: '',
-        email: '',
-        role: ''
+        status: 'active'
     });
 
-    const roleOptions: DropdownOption[] = [
-        { value: 'admin', label: 'Administrateur' },
-        { value: 'moderator', label: 'Modérateur' },
-        { value: 'user', label: 'Utilisateur' },
-        { value: 'contributor', label: 'Contributeur' }
+    const statusOptions: DropdownOption[] = [
+        { value: 'active', label: 'Active' },
+        { value: 'inactive', label: 'Inactive' }
     ];
 
     const handleSubmit = () => {
-        onSubmit(formData);
+        const cityData: CityFormData = {
+            name: formData.name,
+            country: formData.country,
+            description: formData.description || undefined,
+            status: formData.status as 'active' | 'inactive',
+            coordinates: formData.latitude && formData.longitude ? {
+                latitude: parseFloat(formData.latitude),
+                longitude: parseFloat(formData.longitude)
+            } : undefined
+        };
+
+        onSubmit(cityData);
+        
         // Reset form
         setFormData({
             name: '',
+            country: '',
             description: '',
             latitude: '',
             longitude: '',
-            email: '',
-            role: ''
+            status: 'active'
         });
         onClose();
     };
 
-    const isFormValid = formData.name && formData.description && formData.latitude && formData.longitude && formData.email && formData.role;
+    const isFormValid = formData.name && formData.country;
 
     return (
         <Modal
@@ -66,17 +78,24 @@ const AddCityModal: React.FC<AddCityModalProps> = ({ isOpen, onClose, onSubmit }
             <div className="p-6 space-y-4">
                 {/* City Name */}
                 <TextInput
-                    placeholder="Entrez Nom de la ville"
+                    placeholder="Nom de la ville"
                     value={formData.name}
                     onChange={(value) => setFormData(prev => ({ ...prev, name: value }))}
                 />
 
+                {/* Country */}
+                <TextInput
+                    placeholder="Pays"
+                    value={formData.country}
+                    onChange={(value) => setFormData(prev => ({ ...prev, country: value }))}
+                />
+
                 {/* Description */}
                 <TextArea
-                    placeholder="Entrez une description"
+                    placeholder="Description (optionnel)"
                     value={formData.description}
                     onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
-                    rows={4}
+                    rows={3}
                 />
 
                 {/* Coordinates */}
@@ -87,32 +106,30 @@ const AddCityModal: React.FC<AddCityModalProps> = ({ isOpen, onClose, onSubmit }
                     onLongitudeChange={(value) => setFormData(prev => ({ ...prev, longitude: value }))}
                 />
 
-                {/* Email */}
-                <TextInput
-                    type="email"
-                    placeholder="Email"
-                    value={formData.email}
-                    onChange={(value) => setFormData(prev => ({ ...prev, email: value }))}
-                />
-
-                {/* Role Selection */}
+                {/* Status Selection */}
                 <Dropdown
-                    options={roleOptions}
-                    value={formData.role}
-                    onChange={(value) => setFormData(prev => ({ ...prev, role: value }))}
-                    placeholder="Sélectionnez un rôle"
+                    options={statusOptions}
+                    value={formData.status}
+                    onChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+                    placeholder="Statut"
                 />
 
-                {/* Submit Button */}
-                <div className="flex justify-end pt-4">
+                {/* Action Buttons */}
+                <div className="flex justify-end space-x-3 pt-4">
                     <Button
-                        label="Ajouter admin"
+                        label="Annuler"
+                        onClick={onClose}
+                        className="px-6 py-2 rounded-lg font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                    />
+                    <Button
+                        label="Ajouter la ville"
                         onClick={handleSubmit}
                         className={`px-6 py-2 rounded-lg font-medium transition-colors ${
                             isFormValid 
-                                ? 'bg-teal-500 hover:bg-teal-600 text-white cursor-pointer' 
+                                ? 'bg-primary hover:bg-primary-light text-white cursor-pointer' 
                                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         }`}
+                        disabled={!isFormValid}
                     />
                 </div>
             </div>
