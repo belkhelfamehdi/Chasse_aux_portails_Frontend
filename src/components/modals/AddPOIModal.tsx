@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ProfilePictureUpload from '../inputs/ProfilePictureUpload';
 import FileUpload from '../inputs/FileUpload';
-import { TextInput, TextArea } from '../inputs';
+import { TextInput, TextArea, MultiSelectDropdown } from '../inputs';
 import Modal from './Modal';
 import Loading from '../Loading';
 
@@ -19,7 +19,7 @@ interface POIFormData {
     longitude: number;
     iconUrl: string;
     modelUrl: string;
-    cityId: number;
+    cityIds: number[];
 }
 
 const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, isLoading = false }) => {
@@ -30,7 +30,7 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, is
         longitude: '',
         iconUrl: '',
         modelUrl: '',
-        cityId: 1
+        cityIds: [] as number[]
     });
     const [selectedIcon, setSelectedIcon] = useState<File | null>(null);
     const [selectedModel, setSelectedModel] = useState<File | null>(null);
@@ -43,7 +43,7 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, is
             longitude: parseFloat(formData.longitude),
             iconUrl: selectedIcon ? URL.createObjectURL(selectedIcon) : formData.iconUrl,
             modelUrl: selectedModel ? URL.createObjectURL(selectedModel) : formData.modelUrl,
-            cityId: formData.cityId
+            cityIds: formData.cityIds
         };
 
         await onSubmit(poiData);
@@ -57,7 +57,7 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, is
                 longitude: '',
                 iconUrl: '',
                 modelUrl: '',
-                cityId: 1
+                cityIds: []
             });
             setSelectedIcon(null);
             setSelectedModel(null);
@@ -88,7 +88,7 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, is
         }
     };
 
-    const isFormValid = formData.nom && formData.latitude && formData.longitude;
+    const isFormValid = formData.nom && formData.latitude && formData.longitude && formData.cityIds.length > 0;
 
     if (!isOpen) return null;
 
@@ -149,25 +149,31 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, is
                         />
                     </div>
 
-                    {/* City Selection */}
-                    <select
-                        value={formData.cityId}
-                        onChange={(e) => setFormData(prev => ({ ...prev, cityId: parseInt(e.target.value) }))}
+                    {/* Cities Selection */}
+                    <MultiSelectDropdown
+                        options={[
+                            { value: 1, label: 'Paris' },
+                            { value: 2, label: 'New York' },
+                            { value: 3, label: 'Tokyo' },
+                            { value: 4, label: 'Londres' },
+                            { value: 5, label: 'Madrid' },
+                            { value: 6, label: 'Berlin' },
+                            { value: 7, label: 'Rome' },
+                            { value: 8, label: 'Barcelona' },
+                            { value: 9, label: 'Amsterdam' },
+                            { value: 10, label: 'Sydney' }
+                        ]}
+                        selectedValues={formData.cityIds}
+                        onChange={(values) => setFormData(prev => ({ 
+                            ...prev, 
+                            cityIds: values as number[] 
+                        }))}
+                        placeholder="Sélectionnez des villes"
+                        searchPlaceholder="Rechercher une ville..."
+                        label="Villes"
                         disabled={isLoading}
-                        className="w-full px-3 py-3 text-sm border rounded-lg focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        style={{
-                            borderColor: '#e5e7eb',
-                            backgroundColor: isLoading ? '#f9fafb' : 'white',
-                            color: '#1f2937'
-                        }}
-                    >
-                        <option value="">Sélectionnez une ville</option>
-                        <option value={1}>Paris</option>
-                        <option value={2}>New York</option>
-                        <option value={3}>Tokyo</option>
-                        <option value={4}>Londres</option>
-                        <option value={5}>Madrid</option>
-                    </select>
+                        required
+                    />
 
                     {/* File Upload Section */}
                     <FileUpload
@@ -183,7 +189,7 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, is
                     <button
                         onClick={handleSubmit}
                         disabled={!isFormValid || isLoading}
-                        className="w-full py-3 font-medium transition-colors rounded-lg flex items-center justify-center"
+                        className="flex items-center justify-center w-full py-3 font-medium transition-colors rounded-lg"
                         style={{
                             backgroundColor: (isFormValid && !isLoading) ? '#23B2A4' : '#d1d5db',
                             color: (isFormValid && !isLoading) ? 'white' : '#6b7280',

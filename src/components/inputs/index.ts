@@ -3,6 +3,7 @@ export { default as TextInput } from './TextInput';
 export { default as TextArea } from './TextArea';
 export { default as CoordinateInput } from './CoordinateInput';
 export { default as Dropdown } from './Dropdown';
+export { default as MultiSelectDropdown } from './MultiSelectDropdown';
 export { default as FileUpload } from './FileUpload';
 export { default as ProfilePictureUpload } from './ProfilePictureUpload';
 

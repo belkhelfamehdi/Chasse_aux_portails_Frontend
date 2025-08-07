@@ -66,29 +66,35 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle = "Welcome ba
     return (
         <div className="flex min-h-screen bg-gray-100">
             {/* Sidebar */}
-            <div className="flex flex-col w-64 bg-white shadow-lg">
-                <div className="self-center p-6">
-                    <img src={Logo} alt="Logo" className="w-24 h-auto" />
+            <div className="flex flex-col w-16 transition-all duration-300 ease-in-out bg-white shadow-lg group hover:w-64">
+                <div className="flex items-center self-center justify-center p-6">
+                    <img
+                        src={Logo}
+                        alt="Logo"
+                        className="w-8 h-auto transition-all duration-300 ease-in-out group-hover:w-24"
+                    />
                 </div>
 
-                <nav className="px-6 pb-6 flex-1">
+                <nav className="flex-1 px-3 pb-6 transition-all duration-300 ease-in-out group-hover:px-6">
                     <ul className="space-y-2">
                         {filteredNavigationItems.map((item) => {
                             const Icon = item.icon;
                             const isActive = location.pathname === item.path;
-                            
+
                             return (
                                 <li key={item.path}>
-                                    <button 
+                                    <button
                                         onClick={() => handleNavigation(item.path)}
-                                        className={`flex items-center w-full px-4 py-3 space-x-3 rounded-lg transition-colors ${
-                                            isActive 
-                                                ? 'text-primary bg-primary/10' 
+                                        className={`flex items-center w-full px-3 group-hover:px-4 py-3 space-x-0 group-hover:space-x-3 rounded-lg transition-all duration-300 ease-in-out cursor-pointer ${isActive
+                                                ? 'text-primary bg-primary/10'
                                                 : 'text-gray-600 hover:text-primary hover:bg-gray-50'
-                                        }`}
+                                            }`}
+                                        title={item.label} // Tooltip for collapsed state
                                     >
-                                        <Icon className="w-5 h-auto" />
-                                        <span>{item.label}</span>
+                                        <Icon className="flex-shrink-0 w-5 h-auto" />
+                                        <span className="overflow-hidden transition-opacity duration-300 ease-in-out opacity-0 group-hover:opacity-100 whitespace-nowrap">
+                                            {item.label}
+                                        </span>
                                     </button>
                                 </li>
                             );
@@ -97,13 +103,16 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle = "Welcome ba
                 </nav>
 
                 {/* Logout Button */}
-                <div className="px-6 pb-6">
-                    <button 
+                <div className="px-3 pb-6 transition-all duration-300 ease-in-out group-hover:px-6">
+                    <button
                         onClick={handleLogout}
-                        className="flex items-center w-full px-4 py-3 space-x-3 text-left text-gray-600 rounded-lg hover:text-red-600 hover:bg-red-50 transition-colors"
+                        className="flex items-center w-full px-3 py-3 space-x-0 text-left text-gray-600 transition-all duration-300 ease-in-out rounded-lg group-hover:px-4 group-hover:space-x-3 hover:text-red-600 hover:bg-red-50"
+                        title="Déconnexion" // Tooltip for collapsed state
                     >
-                        <ArrowRightStartOnRectangleIcon className="w-5 h-auto" />
-                        <span>Déconnexion</span>
+                        <ArrowRightStartOnRectangleIcon className="flex-shrink-0 w-5 h-auto" />
+                        <span className="overflow-hidden transition-opacity duration-300 ease-in-out opacity-0 group-hover:opacity-100 whitespace-nowrap">
+                            Déconnexion
+                        </span>
                     </button>
                 </div>
             </div>
@@ -123,8 +132,8 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle = "Welcome ba
                                     <p className="text-sm font-medium text-gray-800">{getUserDisplayName()}</p>
                                     <p className="text-xs text-primary">{getRoleDisplayName()}</p>
                                 </div>
-                                <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                                    <span className="text-gray-600 text-sm font-medium">
+                                <div className="flex items-center justify-center w-10 h-10 bg-gray-300 rounded-full">
+                                    <span className="text-sm font-medium text-gray-600">
                                         {user?.firstname?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
                                     </span>
                                 </div>
