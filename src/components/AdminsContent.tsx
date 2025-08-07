@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import AddAdminModal from './AddAdminModal';
+import AddAdminModal from './modals/AddAdminModal';
 
 interface Admin {
   id: string;

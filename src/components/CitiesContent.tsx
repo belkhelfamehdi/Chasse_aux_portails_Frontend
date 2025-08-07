@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import AddCityModal from './AddCityModal';
+import AddCityModal from './modals/AddCityModal';
 
 interface POI {
   id: number;

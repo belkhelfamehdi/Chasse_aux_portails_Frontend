@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import AddPOIModal from './AddPOIModal';
+import AddPOIModal from './modals/AddPOIModal';
 
 interface POI {
   id: number;

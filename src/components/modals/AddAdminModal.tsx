@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { ProfilePictureUpload } from '../inputs';
 
 interface AddAdminModalProps {
     isOpen: boolean;
@@ -12,6 +13,7 @@ interface AdminFormData {
     lastname: string;
     email: string;
     role: 'SUPER_ADMIN' | 'ADMIN';
+    profilePicture?: File | null;
 }
 
 const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit }) => {
@@ -22,16 +24,23 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
         role: 'ADMIN' as 'SUPER_ADMIN' | 'ADMIN'
     });
 
+    const [selectedProfilePicture, setSelectedProfilePicture] = useState<File | null>(null);
+
+    const handleProfilePictureSelect = (file: File | null) => {
+        setSelectedProfilePicture(file);
+    };
+
     const handleSubmit = () => {
         const adminData: AdminFormData = {
             firstname: formData.firstname,
             lastname: formData.lastname,
             email: formData.email,
-            role: formData.role
+            role: formData.role,
+            profilePicture: selectedProfilePicture
         };
 
         onSubmit(adminData);
-        
+
         // Reset form
         setFormData({
             firstname: '',
@@ -39,6 +48,7 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
             email: '',
             role: 'ADMIN'
         });
+        setSelectedProfilePicture(null);
         onClose();
     };
 
@@ -62,11 +72,12 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
 
                 {/* Content */}
                 <div className="p-6" style={{ backgroundColor: 'white' }}>
-                    {/* Profile Icon */}
+                    {/* Profile Picture Upload */}
                     <div className="flex justify-center mb-6">
-                        <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: '#dbeafe' }}>
-                            <span className="text-2xl">👤</span>
-                        </div>
+                        <ProfilePictureUpload
+                            onImageSelect={handleProfilePictureSelect}
+                            size="md"
+                        />
                     </div>
 
                     {/* Form Fields */}
@@ -79,8 +90,8 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
                                 value={formData.lastname}
                                 onChange={(e) => setFormData(prev => ({ ...prev, lastname: e.target.value }))}
                                 className="w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 text-sm"
-                                style={{ 
-                                    borderColor: '#e5e7eb', 
+                                style={{
+                                    borderColor: '#e5e7eb',
                                     backgroundColor: 'white',
                                     color: '#1f2937'
                                 }}
@@ -91,8 +102,8 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
                                 value={formData.firstname}
                                 onChange={(e) => setFormData(prev => ({ ...prev, firstname: e.target.value }))}
                                 className="w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 text-sm"
-                                style={{ 
-                                    borderColor: '#e5e7eb', 
+                                style={{
+                                    borderColor: '#e5e7eb',
                                     backgroundColor: 'white',
                                     color: '#1f2937'
                                 }}
@@ -106,8 +117,8 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
                             value={formData.email}
                             onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                             className="w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 text-sm"
-                            style={{ 
-                                borderColor: '#e5e7eb', 
+                            style={{
+                                borderColor: '#e5e7eb',
                                 backgroundColor: 'white',
                                 color: '#1f2937'
                             }}
@@ -120,36 +131,22 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
                                 <button
                                     type="button"
                                     onClick={() => setFormData(prev => ({ ...prev, role: 'ADMIN' }))}
-                                    className={`px-3 py-2 text-xs rounded-full border transition-colors ${
-                                        formData.role === 'ADMIN'
+                                    className={`px-3 py-2 text-xs rounded-full border transition-colors ${formData.role === 'ADMIN'
                                             ? 'bg-[#23B2A4] text-white border-[#23B2A4]'
                                             : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
-                                    }`}
+                                        }`}
                                 >
                                     Admin
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setFormData(prev => ({ ...prev, role: 'SUPER_ADMIN' }))}
-                                    className={`px-3 py-2 text-xs rounded-full border transition-colors ${
-                                        formData.role === 'SUPER_ADMIN'
+                                    className={`px-3 py-2 text-xs rounded-full border transition-colors ${formData.role === 'SUPER_ADMIN'
                                             ? 'bg-[#23B2A4] text-white border-[#23B2A4]'
                                             : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
-                                    }`}
+                                        }`}
                                 >
                                     Super
-                                </button>
-                                <button
-                                    type="button"
-                                    className="px-3 py-2 text-xs rounded-full border bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
-                                >
-                                    Agent
-                                </button>
-                                <button
-                                    type="button"
-                                    className="px-3 py-2 text-xs rounded-full border bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
-                                >
-                                    Visiteur
                                 </button>
                             </div>
                         </div>

@@ -8,11 +8,11 @@ export { default as ProfilePictureUpload } from './ProfilePictureUpload';
 
 // UI Components
 export { default as Button } from '../Button';
-export { default as Modal } from '../Modal';
+export { default as Modal } from '../modals/Modal';
 
 // Modal Components
-export { default as AddPOIModal } from '../AddPOIModal';
-export { default as AddCityModal } from '../AddCityModal';
+export { default as AddPOIModal } from '../modals/AddPOIModal';
+export { default as AddCityModal } from '../modals/AddCityModal';
 
 // Types
 export interface DropdownOption {
@@ -20,5 +20,5 @@ export interface DropdownOption {
     label: string;
 }
 
-export type { POIFormData } from '../AddPOIModal';
-export type { CityFormData } from '../AddCityModal';
+export type { POIFormData } from '../modals/AddPOIModal';
+export type { CityFormData } from '../modals/AddCityModal';

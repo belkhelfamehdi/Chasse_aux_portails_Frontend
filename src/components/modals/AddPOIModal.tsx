@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { XMarkIcon, CloudArrowUpIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon } from '@heroicons/react/24/outline';
+import ProfilePictureUpload from '../inputs/ProfilePictureUpload';
+import FileUpload from '../inputs/FileUpload';
 
 interface AddPOIModalProps {
     isOpen: boolean;
@@ -27,6 +29,8 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit }) 
         modelUrl: '',
         cityId: 1
     });
+    const [selectedIcon, setSelectedIcon] = useState<File | null>(null);
+    const [selectedModel, setSelectedModel] = useState<File | null>(null);
 
     const handleSubmit = () => {
         const poiData: POIFormData = {
@@ -34,8 +38,8 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit }) 
             description: formData.description,
             latitude: parseFloat(formData.latitude),
             longitude: parseFloat(formData.longitude),
-            iconUrl: formData.iconUrl,
-            modelUrl: formData.modelUrl,
+            iconUrl: selectedIcon ? URL.createObjectURL(selectedIcon) : formData.iconUrl,
+            modelUrl: selectedModel ? URL.createObjectURL(selectedModel) : formData.modelUrl,
             cityId: formData.cityId
         };
 
@@ -51,7 +55,29 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit }) 
             modelUrl: '',
             cityId: 1
         });
+        setSelectedIcon(null);
+        setSelectedModel(null);
         onClose();
+    };
+
+    const handleIconSelect = (file: File | null) => {
+        setSelectedIcon(file);
+        if (file) {
+            const iconUrl = URL.createObjectURL(file);
+            setFormData(prev => ({ ...prev, iconUrl }));
+        } else {
+            setFormData(prev => ({ ...prev, iconUrl: '' }));
+        }
+    };
+
+    const handleModelSelect = (file: File | null) => {
+        setSelectedModel(file);
+        if (file) {
+            const modelUrl = URL.createObjectURL(file);
+            setFormData(prev => ({ ...prev, modelUrl }));
+        } else {
+            setFormData(prev => ({ ...prev, modelUrl: '' }));
+        }
     };
 
     const isFormValid = formData.nom && formData.latitude && formData.longitude;
@@ -74,10 +100,16 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit }) 
 
                 {/* Content */}
                 <div className="p-6" style={{ backgroundColor: 'white' }}>
-                    {/* POI Icon */}
+                    {/* POI Icon Upload */}
                     <div className="flex justify-center mb-6">
-                        <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: '#dbeafe' }}>
-                            <span className="text-2xl">🏛️</span>
+                        <div className="text-center">
+                            <ProfilePictureUpload 
+                                onImageSelect={handleIconSelect}
+                                currentImage={formData.iconUrl}
+                                size="lg"
+                                className="mb-2"
+                            />
+                            <p className="text-sm text-gray-600">Icône du POI</p>
                         </div>
                     </div>
 
@@ -145,29 +177,13 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit }) 
                         </select>
 
                         {/* File Upload Section */}
-                        <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center">
-                            <CloudArrowUpIcon className="w-12 h-12 text-[#23B2A4] mx-auto mb-4" />
-                            <p className="text-sm font-medium text-gray-900 mb-1">Charger un Modèle</p>
-                            <p className="text-xs text-gray-500 mb-4">Déposer/insérer formats .gbl, .obj, .fbx</p>
-                            <input
-                                type="file"
-                                accept=".glb,.obj,.fbx"
-                                className="hidden"
-                                id="model-upload"
-                                onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                        setFormData(prev => ({ ...prev, modelUrl: file.name }));
-                                    }
-                                }}
-                            />
-                            <label
-                                htmlFor="model-upload"
-                                className="inline-block px-4 py-2 text-xs font-medium text-[#23B2A4] border border-[#23B2A4] rounded-lg hover:bg-[#23B2A4] hover:text-white transition-colors cursor-pointer"
-                            >
-                                Parcourir
-                            </label>
-                        </div>
+                        <FileUpload
+                            onFileSelect={handleModelSelect}
+                            acceptedFormats={['GLB', 'OBJ', 'FBX']}
+                            label="Charger un Modèle"
+                            maxSize={10}
+                            className="mb-4"
+                        />
 
                         {/* Submit Button */}
                         <button

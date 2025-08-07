@@ -79,8 +79,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 type="button"
                 className={`w-full border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
                     isDragOver 
-                        ? 'border-blue-500 bg-blue-50' 
-                        : 'border-blue-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50'
+                        ? 'border-primary bg-blue-50' 
+                        : 'border-primary bg-gray-50 hover:border-primary hover:bg-blue-50'
                 }`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
