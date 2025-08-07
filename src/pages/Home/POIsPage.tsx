@@ -1,6 +1,6 @@
 import React from 'react';
 import Layout from '../../components/Layout';
-import POIsContent from '../../components/POIsContent';
+import POIsContent from '../../components/contents/POIsContent';
 
 const POIsPage: React.FC = () => {
   return (

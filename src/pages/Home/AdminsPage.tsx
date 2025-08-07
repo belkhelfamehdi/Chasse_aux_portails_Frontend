@@ -1,6 +1,6 @@
 import React from 'react';
 import Layout from '../../components/Layout';
-import AdminsContent from '../../components/AdminsContent';
+import AdminsContent from '../../components/contents/AdminsContent';
 
 const AdminsPage: React.FC = () => {
   return (

@@ -96,7 +96,7 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
                     type="button"
                     className={`${sizeClasses[size]} rounded-full border border-gray-300 overflow-hidden cursor-pointer transition-colors ${isDragOver
                             ? 'border-gray-400 bg-gray-100'
-                            : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
+                            : 'border-gray-300 bg-gray-50 hover:border-primary hover:bg-teal-100'
                         }`}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}

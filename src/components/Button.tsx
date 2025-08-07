@@ -20,7 +20,7 @@ const Button: React.FC<ButtonProps> = ({
             type={type}
             onClick={onClick} 
             disabled={disabled}
-            className={`bg-primary hover:bg-primary-light text-white text-lg font-normal py-2.5 px-4 rounded-lg shadow-lg transition-colors ${
+            className={`bg-primary hover:bg-primary-light text-white text-md font-normal py-2.5 px-4 rounded-lg shadow-lg transition-colors ${
                 disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
             } ${className || ""}`}
         >
