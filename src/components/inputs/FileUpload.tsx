@@ -7,6 +7,7 @@ interface FileUploadProps {
     label?: string;
     multiple?: boolean;
     maxSize?: number; // in MB
+    disabled?: boolean;
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({
@@ -15,7 +16,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
     className = '',
     label = 'Chargez un Modèle',
     multiple = false,
-    maxSize = 50
+    maxSize = 50,
+    disabled = false
 }) => {
     const [isDragOver, setIsDragOver] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -58,7 +60,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
     };
 
     const openFileDialog = () => {
-        fileInputRef.current?.click();
+        if (!disabled) {
+            fileInputRef.current?.click();
+        }
     };
 
     const getAcceptString = () => {
@@ -73,19 +77,27 @@ const FileUpload: React.FC<FileUploadProps> = ({
         }).join(',');
     };
 
+    // Calculate classes for button
+    const getButtonClasses = () => {
+        if (disabled) {
+            return 'border-gray-300 bg-gray-100 cursor-not-allowed opacity-50';
+        }
+        if (isDragOver) {
+            return 'border-primary bg-blue-50 cursor-pointer';
+        }
+        return 'border-primary bg-gray-50 hover:border-primary hover:bg-teal-50 cursor-pointer';
+    };
+
     return (
         <div className={`w-full ${className}`}>
             <button
                 type="button"
-                className={`w-full border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-                    isDragOver 
-                        ? 'border-primary bg-blue-50' 
-                        : 'border-primary bg-gray-50 hover:border-primary hover:bg-teal-50'
-                }`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
+                className={`w-full border-2 border-dashed rounded-lg p-6 text-center transition-colors ${getButtonClasses()}`}
+                onDragOver={disabled ? undefined : handleDragOver}
+                onDragLeave={disabled ? undefined : handleDragLeave}
+                onDrop={disabled ? undefined : handleDrop}
                 onClick={openFileDialog}
+                disabled={disabled}
             >
                 <input
                     ref={fileInputRef}

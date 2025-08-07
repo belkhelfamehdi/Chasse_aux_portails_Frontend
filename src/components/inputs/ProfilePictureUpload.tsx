@@ -6,6 +6,7 @@ interface ProfilePictureUploadProps {
     className?: string;
     size?: 'sm' | 'md' | 'lg';
     allowRemove?: boolean;
+    disabled?: boolean;
 }
 
 const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
@@ -13,7 +14,8 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
     currentImage,
     className = '',
     size = 'sm',
-    allowRemove = true
+    allowRemove = true,
+    disabled = false
 }) => {
     const [previewImage, setPreviewImage] = useState<string | null>(currentImage || null);
     const [isDragOver, setIsDragOver] = useState(false);
@@ -79,14 +81,29 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
     };
 
     const openFileDialog = () => {
-        fileInputRef.current?.click();
+        if (!disabled) {
+            fileInputRef.current?.click();
+        }
     };
 
     const removeImage = () => {
-        handleFileSelect(null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
+        if (!disabled) {
+            handleFileSelect(null);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         }
+    };
+
+    // Calculate classes for button
+    const getButtonClasses = () => {
+        if (disabled) {
+            return 'cursor-not-allowed opacity-50 bg-gray-100';
+        }
+        if (isDragOver) {
+            return 'border-gray-400 bg-gray-100 cursor-pointer';
+        }
+        return 'border-gray-300 bg-gray-50 hover:border-primary hover:bg-teal-100 cursor-pointer';
     };
 
     return (
@@ -94,14 +111,12 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
             <div className="relative">
                 <button
                     type="button"
-                    className={`${sizeClasses[size]} rounded-full border border-gray-300 overflow-hidden cursor-pointer transition-colors ${isDragOver
-                            ? 'border-gray-400 bg-gray-100'
-                            : 'border-gray-300 bg-gray-50 hover:border-primary hover:bg-teal-100'
-                        }`}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
+                    className={`${sizeClasses[size]} rounded-full border border-gray-300 overflow-hidden transition-colors ${getButtonClasses()}`}
+                    onDragOver={disabled ? undefined : handleDragOver}
+                    onDragLeave={disabled ? undefined : handleDragLeave}
+                    onDrop={disabled ? undefined : handleDrop}
                     onClick={openFileDialog}
+                    disabled={disabled}
                 >
                     <input
                         ref={fileInputRef}
@@ -137,9 +152,12 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
                 {/* Edit button overlay */}
                 <button
                     type="button"
-                    className="absolute bottom-0 flex items-center justify-center w-6 h-6 text-white transition-colors bg-gray-600 rounded-full right-3"
+                    className={`absolute bottom-0 flex items-center justify-center w-6 h-6 text-white transition-colors bg-gray-600 rounded-full right-3 ${
+                        disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700'
+                    }`}
                     onClick={openFileDialog}
                     title="Change photo"
+                    disabled={disabled}
                 >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path
@@ -159,7 +177,10 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
                     <button
                         type="button"
                         onClick={removeImage}
-                        className="text-xs font-medium text-red-600 hover:text-red-800"
+                        disabled={disabled}
+                        className={`text-xs font-medium text-red-600 hover:text-red-800 ${
+                            disabled ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
                     >
                         Supprimer
                     </button>

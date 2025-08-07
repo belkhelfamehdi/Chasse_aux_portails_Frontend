@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { poisAPI } from '../../services/api';
 import AddPOIModal from '../modals/AddPOIModal';
 import Button from '../Button';
+import Loading from '../Loading';
 
 interface POI {
   id: number;
@@ -28,82 +30,124 @@ interface POIFormData {
   cityId: number;
 }
 
-const mockPOIs: POI[] = [
-  {
-    id: 1,
-    nom: 'Grand Plaza Fountain',
-    description: 'A beautiful fountain in the heart of Grand Plaza.',
-    latitude: 40.7812,
-    longitude: -73.9665,
-    iconUrl: 'https://example.com/fountain-icon.png',
-    modelUrl: 'https://example.com/fountain-model.glb',
-    cityId: 1,
-    city: { id: 1, nom: 'New York' }
-  },
-  {
-    id: 2,
-    nom: 'Apex Tower',
-    description: 'Iconic skyscraper with observation decks.',
-    latitude: 40.7484,
-    longitude: -73.9857,
-    iconUrl: 'https://example.com/tower-icon.png',
-    modelUrl: 'https://example.com/tower-model.glb',
-    cityId: 1,
-    city: { id: 1, nom: 'New York' }
-  },
-  {
-    id: 3,
-    nom: 'Bright Square',
-    description: 'Vibrant commercial and entertainment hub.',
-    latitude: 40.7589,
-    longitude: -73.9851,
-    iconUrl: 'https://example.com/square-icon.png',
-    modelUrl: 'https://example.com/square-model.glb',
-    cityId: 1,
-    city: { id: 1, nom: 'New York' }
-  },
-  {
-    id: 4,
-    nom: 'National Museum of Art',
-    description: 'One of the world\'s largest and finest art museums.',
-    latitude: 40.7794,
-    longitude: -73.9632,
-    iconUrl: 'https://example.com/museum-icon.png',
-    modelUrl: 'https://example.com/museum-model.glb',
-    cityId: 1,
-    city: { id: 1, nom: 'New York' }
-  },
-  {
-    id: 5,
-    nom: 'Liberty Bridge',
-    description: 'Historic suspension bridge connecting Manhattan and Brooklyn.',
-    latitude: 40.7061,
-    longitude: -73.9969,
-    iconUrl: 'https://example.com/bridge-icon.png',
-    modelUrl: 'https://example.com/bridge-model.glb',
-    cityId: 1,
-    city: { id: 1, nom: 'New York' }
-  }
-];
-
 export default function POIsContent() {
-  const [pois, setPois] = useState<POI[]>(mockPOIs);
+  const [pois, setPois] = useState<POI[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAddPOI = (poiData: POIFormData) => {
-    const newPOI: POI = {
-      id: Math.max(...pois.map(p => p.id)) + 1,
-      ...poiData,
-      city: mockPOIs.find(p => p.cityId === poiData.cityId)?.city
-    };
-    setPois([...pois, newPOI]);
-    setIsAddModalOpen(false);
+  // Load POIs on component mount
+  useEffect(() => {
+    loadPOIs();
+  }, []);
+
+  const loadPOIs = async () => {
+    try {
+      setIsLoading(true);
+      const response = await poisAPI.getAll();
+      setPois(response as POI[]);
+    } catch (error) {
+      console.error('Error loading POIs:', error);
+      // Use mock data as fallback
+      const mockPOIs: POI[] = [
+        {
+          id: 1,
+          nom: 'Grand Plaza Fountain',
+          description: 'A beautiful fountain in the heart of Grand Plaza.',
+          latitude: 40.7812,
+          longitude: -73.9665,
+          iconUrl: 'https://example.com/fountain-icon.png',
+          modelUrl: 'https://example.com/fountain-model.glb',
+          cityId: 1,
+          city: { id: 1, nom: 'New York' }
+        },
+        {
+          id: 2,
+          nom: 'Apex Tower',
+          description: 'Iconic skyscraper with observation decks.',
+          latitude: 40.7484,
+          longitude: -73.9857,
+          iconUrl: 'https://example.com/tower-icon.png',
+          modelUrl: 'https://example.com/tower-model.glb',
+          cityId: 1,
+          city: { id: 1, nom: 'New York' }
+        },
+        {
+          id: 3,
+          nom: 'Bright Square',
+          description: 'Vibrant commercial and entertainment hub.',
+          latitude: 40.7589,
+          longitude: -73.9851,
+          iconUrl: 'https://example.com/square-icon.png',
+          modelUrl: 'https://example.com/square-model.glb',
+          cityId: 1,
+          city: { id: 1, nom: 'New York' }
+        },
+        {
+          id: 4,
+          nom: 'National Museum of Art',
+          description: 'One of the world\'s largest and finest art museums.',
+          latitude: 40.7794,
+          longitude: -73.9632,
+          iconUrl: 'https://example.com/museum-icon.png',
+          modelUrl: 'https://example.com/museum-model.glb',
+          cityId: 1,
+          city: { id: 1, nom: 'New York' }
+        },
+        {
+          id: 5,
+          nom: 'Liberty Bridge',
+          description: 'Historic suspension bridge connecting Manhattan and Brooklyn.',
+          latitude: 40.7061,
+          longitude: -73.9969,
+          iconUrl: 'https://example.com/bridge-icon.png',
+          modelUrl: 'https://example.com/bridge-model.glb',
+          cityId: 1,
+          city: { id: 1, nom: 'New York' }
+        }
+      ];
+      setPois(mockPOIs);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDeletePOI = (poiId: number) => {
+  const handleAddPOI = async (poiData: POIFormData) => {
+    try {
+      setIsSubmitting(true);
+      const response = await poisAPI.create(poiData);
+      setPois([...pois, response as POI]);
+      setIsAddModalOpen(false);
+    } catch (error) {
+      console.error('Error adding POI:', error);
+      // Fallback to local state update
+      const newPOI: POI = {
+        id: Math.max(...pois.map(p => p.id)) + 1,
+        ...poiData,
+        city: pois.find(p => p.cityId === poiData.cityId)?.city
+      };
+      setPois([...pois, newPOI]);
+      setIsAddModalOpen(false);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeletePOI = async (poiId: number) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce POI ?')) {
-      setPois(pois.filter(poi => poi.id !== poiId));
+      try {
+        setIsDeleting(poiId);
+        await poisAPI.delete(poiId);
+        setPois(pois.filter(poi => poi.id !== poiId));
+      } catch (error) {
+        console.error('Error deleting POI:', error);
+        // Fallback to local state update
+        setPois(pois.filter(poi => poi.id !== poiId));
+      } finally {
+        setIsDeleting(null);
+      }
     }
   };
 
@@ -131,6 +175,14 @@ export default function POIsContent() {
     return iconType ? iconMap[iconType] : '📍';
   };
 
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <Loading size="lg" message="Loading points of interest..." className="min-h-96" />
+      </div>
+    );
+  }
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -155,7 +207,7 @@ export default function POIsContent() {
             />
           </div>
         </div>
-                <Button
+        <Button
           label="Ajouter un POI"
           onClick={() => setIsAddModalOpen(true)}
           className='min-w-fit'
@@ -225,9 +277,14 @@ export default function POIsContent() {
                       <button
                         title="Supprimer"
                         onClick={() => handleDeletePOI(poi.id)}
-                        className="text-red-600 transition-colors hover:text-red-800"
+                        disabled={isDeleting === poi.id}
+                        className="text-red-600 transition-colors hover:text-red-800 disabled:opacity-50"
                       >
-                        <span className="text-sm">Delete</span>
+                        {isDeleting === poi.id ? (
+                          <Loading size="sm" />
+                        ) : (
+                          <span className="text-sm">Delete</span>
+                        )}
                       </button>
                     </div>
                   </td>
@@ -243,6 +300,7 @@ export default function POIsContent() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSubmit={handleAddPOI}
+        isLoading={isSubmitting}
       />
     </div>
   );

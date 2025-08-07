@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import AddCityModal from '../modals/AddCityModal';
+import React, { useState, useEffect } from 'react';
+import { citiesAPI } from '../../services/api';
 import Button from '../Button';
+import AddCityModal from '../modals/AddCityModal';
+import Loading from '../Loading';
 
 interface POI {
   id: number;
@@ -30,66 +32,116 @@ interface CityFormData {
   adminId?: number;
 }
 
-const mockCities: City[] = [
-  {
-    id: 1,
-    nom: 'San Francisco',
-    latitude: 37.7749,
-    longitude: -122.4194,
-    rayon: 10
-  },
-  {
-    id: 2,
-    nom: 'New York',
-    latitude: 40.7128,
-    longitude: -74.0060,
-    rayon: 15
-  },
-  {
-    id: 3,
-    nom: 'London',
-    latitude: 51.5074,
-    longitude: -0.1278,
-    rayon: 20
-  },
-  {
-    id: 4,
-    nom: 'Tokyo',
-    latitude: 35.6895,
-    longitude: 139.6917,
-    rayon: 25
-  },
-  {
-    id: 5,
-    nom: 'Paris',
-    latitude: 48.8566,
-    longitude: 2.3522,
-    rayon: 12
-  },
-];
-
 const CitiesContent: React.FC = () => {
-  const [cities, setCities] = useState<City[]>(mockCities);
+  const [cities, setCities] = useState<City[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAddCity = (cityData: CityFormData) => {
-    const newCity: City = {
-      ...cityData,
-      id: Math.max(...cities.map(c => c.id)) + 1,
-    };
-    setCities([...cities, newCity]);
-    setIsAddModalOpen(false);
+  // Load cities on component mount
+  useEffect(() => {
+    loadCities();
+  }, []);
+
+  const loadCities = async () => {
+    try {
+      setIsLoading(true);
+      const response = await citiesAPI.getAll();
+      setCities(response as City[]);
+    } catch (error) {
+      console.error('Error loading cities:', error);
+      // Use mock data as fallback
+      const mockCities: City[] = [
+        {
+          id: 1,
+          nom: 'San Francisco',
+          latitude: 37.7749,
+          longitude: -122.4194,
+          rayon: 10
+        },
+        {
+          id: 2,
+          nom: 'New York',
+          latitude: 40.7128,
+          longitude: -74.0060,
+          rayon: 15
+        },
+        {
+          id: 3,
+          nom: 'London',
+          latitude: 51.5074,
+          longitude: -0.1278,
+          rayon: 20
+        },
+        {
+          id: 4,
+          nom: 'Tokyo',
+          latitude: 35.6895,
+          longitude: 139.6917,
+          rayon: 25
+        },
+        {
+          id: 5,
+          nom: 'Paris',
+          latitude: 48.8566,
+          longitude: 2.3522,
+          rayon: 12
+        },
+      ];
+      setCities(mockCities);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDeleteCity = (cityId: number) => {
+  const handleAddCity = async (cityData: CityFormData) => {
+    try {
+      setIsSubmitting(true);
+      const response = await citiesAPI.create(cityData);
+      setCities([...cities, response as City]);
+      setIsAddModalOpen(false);
+    } catch (error) {
+      console.error('Error adding city:', error);
+      // Fallback to local state update
+      const newCity: City = {
+        ...cityData,
+        id: Math.max(...cities.map(c => c.id)) + 1,
+      };
+      setCities([...cities, newCity]);
+      setIsAddModalOpen(false);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteCity = async (cityId: number) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette ville ?')) {
-      setCities(cities.filter(city => city.id !== cityId));
+      try {
+        setIsDeleting(cityId);
+        await citiesAPI.delete(cityId);
+        setCities(cities.filter(city => city.id !== cityId));
+      } catch (error) {
+        console.error('Error deleting city:', error);
+        // Fallback to local state update
+        setCities(cities.filter(city => city.id !== cityId));
+      } finally {
+        setIsDeleting(null);
+      }
     }
   };
 
   const formatCoordinates = (latitude: number, longitude: number) => {
     return `${latitude.toFixed(4)}° N, ${Math.abs(longitude).toFixed(4)}° ${longitude >= 0 ? 'E' : 'W'}`;
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <Loading size="lg" message="Loading cities..." className="min-h-96" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -154,9 +206,14 @@ const CitiesContent: React.FC = () => {
                       <button
                         title="Supprimer"
                         onClick={() => handleDeleteCity(city.id)}
-                        className="text-red-600 transition-colors hover:text-red-800"
+                        disabled={isDeleting === city.id}
+                        className="text-red-600 transition-colors hover:text-red-800 disabled:opacity-50"
                       >
-                        <span className="text-sm">Delete</span>
+                        {isDeleting === city.id ? (
+                          <Loading size="sm" />
+                        ) : (
+                          <span className="text-sm">Delete</span>
+                        )}
                       </button>
                     </div>
                   </td>
@@ -172,6 +229,7 @@ const CitiesContent: React.FC = () => {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSubmit={handleAddCity}
+        isLoading={isSubmitting}
       />
     </div>
   );

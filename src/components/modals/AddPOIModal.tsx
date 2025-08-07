@@ -3,11 +3,13 @@ import ProfilePictureUpload from '../inputs/ProfilePictureUpload';
 import FileUpload from '../inputs/FileUpload';
 import { TextInput, TextArea } from '../inputs';
 import Modal from './Modal';
+import Loading from '../Loading';
 
 interface AddPOIModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: POIFormData) => void;
+    onSubmit: (data: POIFormData) => void | Promise<void>;
+    isLoading?: boolean;
 }
 
 interface POIFormData {
@@ -20,7 +22,7 @@ interface POIFormData {
     cityId: number;
 }
 
-const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit }) => {
+const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, isLoading = false }) => {
     const [formData, setFormData] = useState({
         nom: '',
         description: '',
@@ -33,7 +35,7 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit }) 
     const [selectedIcon, setSelectedIcon] = useState<File | null>(null);
     const [selectedModel, setSelectedModel] = useState<File | null>(null);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         const poiData: POIFormData = {
             nom: formData.nom,
             description: formData.description,
@@ -44,40 +46,45 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit }) 
             cityId: formData.cityId
         };
 
-        onSubmit(poiData);
+        await onSubmit(poiData);
 
-        // Reset form
-        setFormData({
-            nom: '',
-            description: '',
-            latitude: '',
-            longitude: '',
-            iconUrl: '',
-            modelUrl: '',
-            cityId: 1
-        });
-        setSelectedIcon(null);
-        setSelectedModel(null);
-        onClose();
+        // Reset form only if not handled by parent (for async operations)
+        if (!isLoading) {
+            setFormData({
+                nom: '',
+                description: '',
+                latitude: '',
+                longitude: '',
+                iconUrl: '',
+                modelUrl: '',
+                cityId: 1
+            });
+            setSelectedIcon(null);
+            setSelectedModel(null);
+        }
     };
 
     const handleIconSelect = (file: File | null) => {
-        setSelectedIcon(file);
-        if (file) {
-            const iconUrl = URL.createObjectURL(file);
-            setFormData(prev => ({ ...prev, iconUrl }));
-        } else {
-            setFormData(prev => ({ ...prev, iconUrl: '' }));
+        if (!isLoading) {
+            setSelectedIcon(file);
+            if (file) {
+                const iconUrl = URL.createObjectURL(file);
+                setFormData(prev => ({ ...prev, iconUrl }));
+            } else {
+                setFormData(prev => ({ ...prev, iconUrl: '' }));
+            }
         }
     };
 
     const handleModelSelect = (file: File | null) => {
-        setSelectedModel(file);
-        if (file) {
-            const modelUrl = URL.createObjectURL(file);
-            setFormData(prev => ({ ...prev, modelUrl }));
-        } else {
-            setFormData(prev => ({ ...prev, modelUrl: '' }));
+        if (!isLoading) {
+            setSelectedModel(file);
+            if (file) {
+                const modelUrl = URL.createObjectURL(file);
+                setFormData(prev => ({ ...prev, modelUrl }));
+            } else {
+                setFormData(prev => ({ ...prev, modelUrl: '' }));
+            }
         }
     };
 
@@ -96,6 +103,7 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit }) 
                             currentImage={formData.iconUrl}
                             size="md"
                             className="mb-2"
+                            disabled={isLoading}
                         />
                         <p className="text-sm text-gray-600">Icône du POI</p>
                     </div>
@@ -109,6 +117,7 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit }) 
                         value={formData.nom}
                         onChange={(value) => setFormData(prev => ({ ...prev, nom: value }))}
                         required
+                        disabled={isLoading}
                     />
 
                     {/* Description */}
@@ -117,6 +126,7 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit }) 
                         value={formData.description}
                         onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
                         rows={3}
+                        disabled={isLoading}
                     />
 
                     {/* Coordinates */}
@@ -127,6 +137,7 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit }) 
                             value={formData.latitude}
                             onChange={(value) => setFormData(prev => ({ ...prev, latitude: value }))}
                             required
+                            disabled={isLoading}
                         />
                         <TextInput
                             type="number"
@@ -134,6 +145,7 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit }) 
                             value={formData.longitude}
                             onChange={(value) => setFormData(prev => ({ ...prev, longitude: value }))}
                             required
+                            disabled={isLoading}
                         />
                     </div>
 
@@ -141,10 +153,11 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit }) 
                     <select
                         value={formData.cityId}
                         onChange={(e) => setFormData(prev => ({ ...prev, cityId: parseInt(e.target.value) }))}
-                        className="w-full px-3 py-3 text-sm border rounded-lg focus:outline-none focus:ring-2"
+                        disabled={isLoading}
+                        className="w-full px-3 py-3 text-sm border rounded-lg focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{
                             borderColor: '#e5e7eb',
-                            backgroundColor: 'white',
+                            backgroundColor: isLoading ? '#f9fafb' : 'white',
                             color: '#1f2937'
                         }}
                     >
@@ -163,20 +176,28 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit }) 
                         label="Charger un Modèle"
                         maxSize={10}
                         className="mb-4"
+                        disabled={isLoading}
                     />
 
                     {/* Submit Button */}
                     <button
                         onClick={handleSubmit}
-                        disabled={!isFormValid}
-                        className="w-full py-3 font-medium transition-colors rounded-lg"
+                        disabled={!isFormValid || isLoading}
+                        className="w-full py-3 font-medium transition-colors rounded-lg flex items-center justify-center"
                         style={{
-                            backgroundColor: isFormValid ? '#23B2A4' : '#d1d5db',
-                            color: isFormValid ? 'white' : '#6b7280',
-                            cursor: isFormValid ? 'pointer' : 'not-allowed'
+                            backgroundColor: (isFormValid && !isLoading) ? '#23B2A4' : '#d1d5db',
+                            color: (isFormValid && !isLoading) ? 'white' : '#6b7280',
+                            cursor: (isFormValid && !isLoading) ? 'pointer' : 'not-allowed'
                         }}
                     >
-                        Ajouter POI
+                        {isLoading ? (
+                            <>
+                                <Loading size="sm" />
+                                <span className="ml-2">Adding...</span>
+                            </>
+                        ) : (
+                            'Ajouter POI'
+                        )}
                     </button>
                 </div>
             </div>

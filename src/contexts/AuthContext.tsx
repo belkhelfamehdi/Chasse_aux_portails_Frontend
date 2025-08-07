@@ -15,6 +15,8 @@ interface AuthContextType {
     login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
     logout: () => Promise<void>;
     isLoading: boolean;
+    isLoginLoading: boolean;
+    isLogoutLoading: boolean;
     isAuthenticated: boolean;
 }
 
@@ -36,6 +38,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isLoginLoading, setIsLoginLoading] = useState(false);
+    const [isLogoutLoading, setIsLogoutLoading] = useState(false);
 
     const isAuthenticated = !!user && !!token;
 
@@ -60,6 +64,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const login = async (email: string, password: string, rememberMe = false): Promise<void> => {
         try {
+            setIsLoginLoading(true);
             const response = await fetch('http://localhost:3000/api/auth/login', {
                 method: 'POST',
                 headers: {
@@ -88,11 +93,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } catch (error) {
             console.error('Login error:', error);
             throw error;
+        } finally {
+            setIsLoginLoading(false);
         }
     };
 
     const logout = async (): Promise<void> => {
         try {
+            setIsLogoutLoading(true);
             // Call logout endpoint to clear cookies
             await fetch('http://localhost:3000/api/auth/logout', {
                 method: 'POST',
@@ -106,6 +114,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setToken(null);
             localStorage.removeItem('accessToken');
             localStorage.removeItem('user');
+            setIsLogoutLoading(false);
         }
     };
 
@@ -115,8 +124,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         login,
         logout,
         isLoading,
+        isLoginLoading,
+        isLogoutLoading,
         isAuthenticated,
-    }), [user, token, isLoading, isAuthenticated]);
+    }), [user, token, isLoading, isLoginLoading, isLogoutLoading, isAuthenticated]);
 
     return (
         <AuthContext.Provider value={value}>

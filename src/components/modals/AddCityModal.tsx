@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import Modal from './Modal';
 import { TextInput, TextArea } from '../inputs';
+import Loading from '../Loading';
 
 interface AddCityModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: CityFormData) => void;
+    onSubmit: (data: CityFormData) => void | Promise<void>;
+    isLoading?: boolean;
 }
 
 interface CityFormData {
@@ -16,7 +18,7 @@ interface CityFormData {
     adminId?: number;
 }
 
-const AddCityModal: React.FC<AddCityModalProps> = ({ isOpen, onClose, onSubmit }) => {
+const AddCityModal: React.FC<AddCityModalProps> = ({ isOpen, onClose, onSubmit, isLoading = false }) => {
     const [formData, setFormData] = useState({
         nom: '',
         description: '',
@@ -27,7 +29,7 @@ const AddCityModal: React.FC<AddCityModalProps> = ({ isOpen, onClose, onSubmit }
         adminId: undefined as number | undefined
     });
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         const cityData: CityFormData = {
             nom: formData.nom,
             latitude: parseFloat(formData.latitude),
@@ -36,19 +38,20 @@ const AddCityModal: React.FC<AddCityModalProps> = ({ isOpen, onClose, onSubmit }
             adminId: formData.adminId
         };
 
-        onSubmit(cityData);
+        await onSubmit(cityData);
 
-        // Reset form
-        setFormData({
-            nom: '',
-            description: '',
-            latitude: '',
-            longitude: '',
-            rayon: '',
-            email: '',
-            adminId: undefined
-        });
-        onClose();
+        // Reset form only if not handled by parent (for async operations)
+        if (!isLoading) {
+            setFormData({
+                nom: '',
+                description: '',
+                latitude: '',
+                longitude: '',
+                rayon: '',
+                email: '',
+                adminId: undefined
+            });
+        }
     };
 
     const isFormValid = formData.nom &&
@@ -69,6 +72,7 @@ const AddCityModal: React.FC<AddCityModalProps> = ({ isOpen, onClose, onSubmit }
                         value={formData.nom}
                         onChange={(value) => setFormData(prev => ({ ...prev, nom: value }))}
                         required
+                        disabled={isLoading}
                     />
 
                     {/* Description */}
@@ -77,6 +81,7 @@ const AddCityModal: React.FC<AddCityModalProps> = ({ isOpen, onClose, onSubmit }
                         value={formData.description}
                         onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
                         rows={3}
+                        disabled={isLoading}
                     />
 
                     {/* Coordinates */}
@@ -87,6 +92,7 @@ const AddCityModal: React.FC<AddCityModalProps> = ({ isOpen, onClose, onSubmit }
                             value={formData.latitude}
                             onChange={(value) => setFormData(prev => ({ ...prev, latitude: value }))}
                             required
+                            disabled={isLoading}
                         />
                         <TextInput
                             type="number"
@@ -94,6 +100,7 @@ const AddCityModal: React.FC<AddCityModalProps> = ({ isOpen, onClose, onSubmit }
                             value={formData.longitude}
                             onChange={(value) => setFormData(prev => ({ ...prev, longitude: value }))}
                             required
+                            disabled={isLoading}
                         />
                     </div>
 
@@ -104,6 +111,7 @@ const AddCityModal: React.FC<AddCityModalProps> = ({ isOpen, onClose, onSubmit }
                         value={formData.rayon}
                         onChange={(value) => setFormData(prev => ({ ...prev, rayon: value }))}
                         required
+                        disabled={isLoading}
                     />
 
                     {/* Email */}
@@ -112,16 +120,18 @@ const AddCityModal: React.FC<AddCityModalProps> = ({ isOpen, onClose, onSubmit }
                         placeholder="Email"
                         value={formData.email}
                         onChange={(value) => setFormData(prev => ({ ...prev, email: value }))}
+                        disabled={isLoading}
                     />
 
                     {/* Admin Selection */}
                     <select
                         value={formData.adminId ?? ''}
                         onChange={(e) => setFormData(prev => ({ ...prev, adminId: e.target.value ? parseInt(e.target.value) : undefined }))}
-                        className="w-full px-3 py-3 text-sm border rounded-lg focus:outline-none focus:ring-2"
+                        disabled={isLoading}
+                        className="w-full px-3 py-3 text-sm border rounded-lg focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{
                             borderColor: '#e5e7eb',
-                            backgroundColor: 'white',
+                            backgroundColor: isLoading ? '#f9fafb' : 'white',
                             color: '#1f2937'
                         }}
                     >
@@ -134,15 +144,22 @@ const AddCityModal: React.FC<AddCityModalProps> = ({ isOpen, onClose, onSubmit }
                     {/* Submit Button */}
                     <button
                         onClick={handleSubmit}
-                        disabled={!isFormValid}
-                        className="w-full py-3 font-medium transition-colors rounded-lg"
+                        disabled={!isFormValid || isLoading}
+                        className="w-full py-3 font-medium transition-colors rounded-lg flex items-center justify-center"
                         style={{
-                            backgroundColor: isFormValid ? '#23B2A4' : '#d1d5db',
-                            color: isFormValid ? 'white' : '#6b7280',
-                            cursor: isFormValid ? 'pointer' : 'not-allowed'
+                            backgroundColor: (isFormValid && !isLoading) ? '#23B2A4' : '#d1d5db',
+                            color: (isFormValid && !isLoading) ? 'white' : '#6b7280',
+                            cursor: (isFormValid && !isLoading) ? 'pointer' : 'not-allowed'
                         }}
                     >
-                        Ajouter ville
+                        {isLoading ? (
+                            <>
+                                <Loading size="sm" />
+                                <span className="ml-2">Adding...</span>
+                            </>
+                        ) : (
+                            'Ajouter ville'
+                        )}
                     </button>
                 </div>
             </div>

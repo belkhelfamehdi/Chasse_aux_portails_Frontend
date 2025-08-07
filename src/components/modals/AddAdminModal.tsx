@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { ProfilePictureUpload, TextInput } from '../inputs';
 import Modal from './Modal';
+import Loading from '../Loading';
 
 interface AddAdminModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: AdminFormData) => void;
+    onSubmit: (data: AdminFormData) => void | Promise<void>;
+    isLoading?: boolean;
 }
 
 interface AdminFormData {
@@ -16,7 +18,7 @@ interface AdminFormData {
     profilePicture?: File | null;
 }
 
-const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit }) => {
+const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit, isLoading = false }) => {
     const [formData, setFormData] = useState({
         firstname: '',
         lastname: '',
@@ -30,7 +32,7 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
         setSelectedProfilePicture(file);
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         const adminData: AdminFormData = {
             firstname: formData.firstname,
             lastname: formData.lastname,
@@ -39,17 +41,18 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
             profilePicture: selectedProfilePicture
         };
 
-        onSubmit(adminData);
+        await onSubmit(adminData);
 
-        // Reset form
-        setFormData({
-            firstname: '',
-            lastname: '',
-            email: '',
-            role: 'ADMIN'
-        });
-        setSelectedProfilePicture(null);
-        onClose();
+        // Reset form only if not handled by parent (for async operations)
+        if (!isLoading) {
+            setFormData({
+                firstname: '',
+                lastname: '',
+                email: '',
+                role: 'ADMIN'
+            });
+            setSelectedProfilePicture(null);
+        }
     };
 
     const isFormValid = formData.firstname && formData.lastname && formData.email;
@@ -64,6 +67,7 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
                     <ProfilePictureUpload
                         onImageSelect={handleProfilePictureSelect}
                         size="md"
+                        disabled={isLoading}
                     />
                 </div>
 
@@ -76,12 +80,14 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
                             value={formData.lastname}
                             onChange={(value) => setFormData(prev => ({ ...prev, lastname: value }))}
                             required
+                            disabled={isLoading}
                         />
                         <TextInput
                             placeholder="Prénom"
                             value={formData.firstname}
                             onChange={(value) => setFormData(prev => ({ ...prev, firstname: value }))}
                             required
+                            disabled={isLoading}
                         />
                     </div>
 
@@ -92,6 +98,7 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
                         value={formData.email}
                         onChange={(value) => setFormData(prev => ({ ...prev, email: value }))}
                         required
+                        disabled={isLoading}
                     />
 
                     {/* Role Selection */}
@@ -101,7 +108,8 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
                             <button
                                 type="button"
                                 onClick={() => setFormData(prev => ({ ...prev, role: 'ADMIN' }))}
-                                className={`px-3 py-2 text-xs rounded-full border transition-colors ${formData.role === 'ADMIN'
+                                disabled={isLoading}
+                                className={`px-3 py-2 text-xs rounded-full border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${formData.role === 'ADMIN'
                                         ? 'bg-[#23B2A4] text-white border-[#23B2A4]'
                                         : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
                                     }`}
@@ -111,7 +119,8 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
                             <button
                                 type="button"
                                 onClick={() => setFormData(prev => ({ ...prev, role: 'SUPER_ADMIN' }))}
-                                className={`px-3 py-2 text-xs rounded-full border transition-colors ${formData.role === 'SUPER_ADMIN'
+                                disabled={isLoading}
+                                className={`px-3 py-2 text-xs rounded-full border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${formData.role === 'SUPER_ADMIN'
                                         ? 'bg-[#23B2A4] text-white border-[#23B2A4]'
                                         : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
                                     }`}
@@ -124,15 +133,22 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
                     {/* Submit Button */}
                     <button
                         onClick={handleSubmit}
-                        disabled={!isFormValid}
-                        className="w-full py-3 font-medium transition-colors rounded-lg"
+                        disabled={!isFormValid || isLoading}
+                        className="w-full py-3 font-medium transition-colors rounded-lg flex items-center justify-center"
                         style={{
-                            backgroundColor: isFormValid ? '#23B2A4' : '#d1d5db',
-                            color: isFormValid ? 'white' : '#6b7280',
-                            cursor: isFormValid ? 'pointer' : 'not-allowed'
+                            backgroundColor: (isFormValid && !isLoading) ? '#23B2A4' : '#d1d5db',
+                            color: (isFormValid && !isLoading) ? 'white' : '#6b7280',
+                            cursor: (isFormValid && !isLoading) ? 'pointer' : 'not-allowed'
                         }}
                     >
-                        Ajouter admin
+                        {isLoading ? (
+                            <>
+                                <Loading size="sm" />
+                                <span className="ml-2">Adding...</span>
+                            </>
+                        ) : (
+                            'Ajouter admin'
+                        )}
                     </button>
                 </div>
             </div>

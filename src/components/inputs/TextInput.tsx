@@ -8,6 +8,7 @@ interface TextInputProps {
     className?: string;
     required?: boolean;
     type?: 'text' | 'email' | 'password' | 'number';
+    disabled?: boolean;
 }
 
 const TextInput: React.FC<TextInputProps> = ({
@@ -17,7 +18,8 @@ const TextInput: React.FC<TextInputProps> = ({
     onChange,
     className = '',
     required = false,
-    type = 'text'
+    type = 'text',
+    disabled = false
 }) => {
     return (
         <div className={`w-full ${className}`}>
@@ -33,7 +35,10 @@ const TextInput: React.FC<TextInputProps> = ({
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 required={required}
-                className="w-full px-3 py-2 text-gray-600 placeholder-gray-400 transition-colors bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-gray-400 focus:bg-white"
+                disabled={disabled}
+                className={`w-full px-3 py-2 text-gray-600 placeholder-gray-400 transition-colors bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-gray-400 focus:bg-white ${
+                    disabled ? 'opacity-50 cursor-not-allowed bg-gray-50' : ''
+                }`}
             />
         </div>
     );

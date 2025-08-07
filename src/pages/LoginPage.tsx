@@ -6,18 +6,16 @@ import Logo from '../assets/logo.png';
 
 const LoginPage: React.FC = () => {
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { login, isLoginLoading } = useAuth();
     const [formData, setFormData] = useState({
         email: '',
         password: '',
         rememberMe: false
     });
-    const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsLoading(true);
         setError(null);
 
         try {
@@ -25,8 +23,6 @@ const LoginPage: React.FC = () => {
             navigate('/dashboard');
         } catch (error) {
             setError(error instanceof Error ? error.message : 'Une erreur est survenue');
-        } finally {
-            setIsLoading(false);
         }
     };
 
@@ -111,13 +107,13 @@ const LoginPage: React.FC = () => {
                     {/* Submit Button */}
                     <Button
                         className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
-                            isFormValid && !isLoading
+                            isFormValid && !isLoginLoading
                                 ? 'bg-teal-500 hover:bg-teal-600 text-white cursor-pointer'
                                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         }`}
-                        label={isLoading ? 'Connexion...' : 'Se connecter'}
+                        label={isLoginLoading ? 'Connexion...' : 'Se connecter'}
                         onClick={() => handleSubmit(new Event('submit') as unknown as React.FormEvent)}
-                        disabled={!isFormValid || isLoading}
+                        disabled={!isFormValid || isLoginLoading}
                     />
                 </form>
             </div>

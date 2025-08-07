@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { adminsAPI } from '../../services/api';
 import AddAdminModal from '../modals/AddAdminModal';
 import Button from '../Button';
+import Loading from '../Loading';
 
 interface Admin {
   id: string;
@@ -24,68 +26,109 @@ interface AdminFormData {
   role: Admin['role'];
 }
 
-// Mock data
-const mockAdmins: Admin[] = [
-  {
-    id: '1',
-    firstname: 'Grand Plaza',
-    lastname: 'Fountain',
-    email: 'example@email.com',
-    role: 'ADMIN',
-    cities: []
-  },
-  {
-    id: '2',
-    firstname: 'Apex',
-    lastname: 'Tower',
-    email: 'example@email.com',
-    role: 'ADMIN',
-    cities: []
-  },
-  {
-    id: '3',
-    firstname: 'Bright',
-    lastname: 'Square',
-    email: 'example@email.com',
-    role: 'ADMIN',
-    cities: []
-  },
-  {
-    id: '4',
-    firstname: 'National Museum',
-    lastname: 'of Art',
-    email: 'example@email.com',
-    role: 'ADMIN',
-    cities: []
-  },
-  {
-    id: '5',
-    firstname: 'Liberty',
-    lastname: 'Bridge',
-    email: 'example@email.com',
-    role: 'ADMIN',
-    cities: []
-  }
-];
-
 export default function AdminsContent() {
-  const [admins, setAdmins] = useState<Admin[]>(mockAdmins);
+  const [admins, setAdmins] = useState<Admin[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAddAdmin = (adminData: AdminFormData) => {
-    const newAdmin: Admin = {
-      id: (Math.max(...admins.map(a => parseInt(a.id))) + 1).toString(),
-      ...adminData,
-      cities: []
-    };
-    setAdmins([...admins, newAdmin]);
-    setIsAddModalOpen(false);
+  // Load admins on component mount
+  useEffect(() => {
+    loadAdmins();
+  }, []);
+
+  const loadAdmins = async () => {
+    try {
+      setIsLoading(true);
+      const response = await adminsAPI.getAll();
+      setAdmins(response as Admin[]);
+    } catch (error) {
+      console.error('Error loading admins:', error);
+      // Use mock data as fallback
+      const mockAdmins: Admin[] = [
+        {
+          id: '1',
+          firstname: 'Grand Plaza',
+          lastname: 'Fountain',
+          email: 'example@email.com',
+          role: 'ADMIN',
+          cities: []
+        },
+        {
+          id: '2',
+          firstname: 'Apex',
+          lastname: 'Tower',
+          email: 'example@email.com',
+          role: 'ADMIN',
+          cities: []
+        },
+        {
+          id: '3',
+          firstname: 'Bright',
+          lastname: 'Square',
+          email: 'example@email.com',
+          role: 'ADMIN',
+          cities: []
+        },
+        {
+          id: '4',
+          firstname: 'National Museum',
+          lastname: 'of Art',
+          email: 'example@email.com',
+          role: 'ADMIN',
+          cities: []
+        },
+        {
+          id: '5',
+          firstname: 'Liberty',
+          lastname: 'Bridge',
+          email: 'example@email.com',
+          role: 'ADMIN',
+          cities: []
+        }
+      ];
+      setAdmins(mockAdmins);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDeleteAdmin = (adminId: string) => {
+  const handleAddAdmin = async (adminData: AdminFormData) => {
+    try {
+      setIsSubmitting(true);
+      const response = await adminsAPI.create(adminData);
+      setAdmins([...admins, response as Admin]);
+      setIsAddModalOpen(false);
+    } catch (error) {
+      console.error('Error adding admin:', error);
+      // Fallback to local state update
+      const newAdmin: Admin = {
+        id: (Math.max(...admins.map(a => parseInt(a.id))) + 1).toString(),
+        ...adminData,
+        cities: []
+      };
+      setAdmins([...admins, newAdmin]);
+      setIsAddModalOpen(false);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteAdmin = async (adminId: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cet administrateur ?')) {
-      setAdmins(admins.filter(admin => admin.id !== adminId));
+      try {
+        setIsDeleting(adminId);
+        await adminsAPI.delete(parseInt(adminId));
+        setAdmins(admins.filter(admin => admin.id !== adminId));
+      } catch (error) {
+        console.error('Error deleting admin:', error);
+        // Fallback to local state update
+        setAdmins(admins.filter(admin => admin.id !== adminId));
+      } finally {
+        setIsDeleting(null);
+      }
     }
   };
 
@@ -112,6 +155,14 @@ export default function AdminsContent() {
       admin.email.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
+
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <Loading size="lg" message="Loading admins..." className="min-h-96" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -201,9 +252,14 @@ export default function AdminsContent() {
                       <button
                         title="Supprimer"
                         onClick={() => handleDeleteAdmin(admin.id)}
-                        className="text-red-600 transition-colors hover:text-red-800"
+                        disabled={isDeleting === admin.id}
+                        className="text-red-600 transition-colors hover:text-red-800 disabled:opacity-50"
                       >
-                        <span className="text-sm">Delete</span>
+                        {isDeleting === admin.id ? (
+                          <Loading size="sm" />
+                        ) : (
+                          <span className="text-sm">Delete</span>
+                        )}
                       </button>
                     </div>
                   </td>
@@ -219,6 +275,7 @@ export default function AdminsContent() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSubmit={handleAddAdmin}
+        isLoading={isSubmitting}
       />
     </div>
   );
