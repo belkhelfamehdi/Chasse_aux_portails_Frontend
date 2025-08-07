@@ -2,13 +2,9 @@ import React from 'react';
 import Layout from '../../components/Layout';
 import AdminsContent from '../../components/AdminsContent';
 
-interface AdminsPageProps {
-  onLogout?: () => void;
-}
-
-const AdminsPage: React.FC<AdminsPageProps> = ({ onLogout }) => {
+const AdminsPage: React.FC = () => {
   return (
-    <Layout title="Admins" subtitle="Gestion des administrateurs" onLogout={onLogout}>
+    <Layout title="Gestion des Admins" subtitle="Gérez tous les administrateurs">
       <AdminsContent />
     </Layout>
   );

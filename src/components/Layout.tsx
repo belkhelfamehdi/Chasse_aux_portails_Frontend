@@ -2,34 +2,64 @@ import React, { type ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { HomeIcon, MapIcon, MapPinIcon, UsersIcon, Cog6ToothIcon } from '@heroicons/react/24/solid';
 import { ArrowRightStartOnRectangleIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '../contexts/AuthContext';
 import Logo from '../assets/logo.png';
 
 interface LayoutProps {
     children: ReactNode;
     title: string;
     subtitle?: string;
-    onLogout?: () => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, title, subtitle = "Welcome back", onLogout }) => {
+const Layout: React.FC<LayoutProps> = ({ children, title, subtitle = "Welcome back" }) => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { user, logout } = useAuth();
 
     const navigationItems = [
         { path: '/dashboard', icon: HomeIcon, label: 'Dashboard' },
         { path: '/cities', icon: MapIcon, label: 'Villes' },
         { path: '/pois', icon: MapPinIcon, label: 'POIs' },
-        { path: '/admins', icon: UsersIcon, label: 'Admins' },
+        { path: '/admins', icon: UsersIcon, label: 'Admins', requiresSuperAdmin: true },
         { path: '/settings', icon: Cog6ToothIcon, label: 'Paramètres' },
     ];
+
+    // Filter navigation items based on user role
+    const filteredNavigationItems = navigationItems.filter(item => {
+        if (item.requiresSuperAdmin && user?.role !== 'SUPER_ADMIN') {
+            return false;
+        }
+        return true;
+    });
 
     const handleNavigation = (path: string) => {
         navigate(path);
     };
 
-    const handleLogout = () => {
-        if (onLogout) {
-            onLogout();
+    const handleLogout = async () => {
+        try {
+            await logout();
+            navigate('/login');
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    };
+
+    const getUserDisplayName = () => {
+        if (user?.firstname && user?.lastname) {
+            return `${user.firstname} ${user.lastname}`;
+        }
+        return user?.email || 'Utilisateur';
+    };
+
+    const getRoleDisplayName = () => {
+        switch (user?.role) {
+            case 'SUPER_ADMIN':
+                return 'Super Admin';
+            case 'ADMIN':
+                return 'Admin';
+            default:
+                return 'Utilisateur';
         }
     };
 
@@ -43,7 +73,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle = "Welcome ba
 
                 <nav className="px-6 pb-6 flex-1">
                     <ul className="space-y-2">
-                        {navigationItems.map((item) => {
+                        {filteredNavigationItems.map((item) => {
                             const Icon = item.icon;
                             const isActive = location.pathname === item.path;
                             
@@ -90,14 +120,14 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle = "Welcome ba
                         <div className="flex items-center space-x-4">
                             <div className="flex items-center mr-5 space-x-3">
                                 <div className="text-right">
-                                    <p className="text-sm font-medium text-gray-800">John Doe</p>
-                                    <p className="text-xs text-primary">Admin</p>
+                                    <p className="text-sm font-medium text-gray-800">{getUserDisplayName()}</p>
+                                    <p className="text-xs text-primary">{getRoleDisplayName()}</p>
                                 </div>
-                                <img
-                                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
-                                    alt="User Avatar"
-                                    className="w-10 h-10 rounded-full"
-                                />
+                                <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                                    <span className="text-gray-600 text-sm font-medium">
+                                        {user?.firstname?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -1,13 +1,5 @@
-import React, { useState } from 'react';
-import {
-    Modal,
-    TextInput,
-    TextArea,
-    CoordinateInput,
-    Dropdown,
-    Button,
-    type DropdownOption
-} from './inputs/index';
+import { useState } from 'react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 
 interface AddCityModalProps {
     isOpen: boolean;
@@ -16,124 +8,174 @@ interface AddCityModalProps {
 }
 
 interface CityFormData {
-    name: string;
-    country: string;
-    description?: string;
-    coordinates?: {
-        latitude: number;
-        longitude: number;
-    };
-    status: 'active' | 'inactive';
+    nom: string;
+    latitude: number;
+    longitude: number;
+    rayon: number;
+    adminId?: number;
 }
 
 const AddCityModal: React.FC<AddCityModalProps> = ({ isOpen, onClose, onSubmit }) => {
     const [formData, setFormData] = useState({
-        name: '',
-        country: '',
-        description: '',
+        nom: '',
         latitude: '',
         longitude: '',
-        status: 'active'
+        rayon: '',
+        email: '',
+        adminId: undefined as number | undefined
     });
-
-    const statusOptions: DropdownOption[] = [
-        { value: 'active', label: 'Active' },
-        { value: 'inactive', label: 'Inactive' }
-    ];
 
     const handleSubmit = () => {
         const cityData: CityFormData = {
-            name: formData.name,
-            country: formData.country,
-            description: formData.description || undefined,
-            status: formData.status as 'active' | 'inactive',
-            coordinates: formData.latitude && formData.longitude ? {
-                latitude: parseFloat(formData.latitude),
-                longitude: parseFloat(formData.longitude)
-            } : undefined
+            nom: formData.nom,
+            latitude: parseFloat(formData.latitude),
+            longitude: parseFloat(formData.longitude),
+            rayon: parseInt(formData.rayon),
+            adminId: formData.adminId
         };
 
         onSubmit(cityData);
-        
+
         // Reset form
         setFormData({
-            name: '',
-            country: '',
-            description: '',
+            nom: '',
             latitude: '',
             longitude: '',
-            status: 'active'
+            rayon: '',
+            email: '',
+            adminId: undefined
         });
         onClose();
     };
 
-    const isFormValid = formData.name && formData.country;
+    const isFormValid = formData.nom &&
+        formData.latitude !== '' &&
+        formData.longitude !== '' &&
+        formData.rayon !== '';
+
+    if (!isOpen) return null;
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            title="Ajouter une ville"
-        >
-            <div className="p-6 space-y-4">
-                {/* City Name */}
-                <TextInput
-                    placeholder="Nom de la ville"
-                    value={formData.name}
-                    onChange={(value) => setFormData(prev => ({ ...prev, name: value }))}
-                />
-
-                {/* Country */}
-                <TextInput
-                    placeholder="Pays"
-                    value={formData.country}
-                    onChange={(value) => setFormData(prev => ({ ...prev, country: value }))}
-                />
-
-                {/* Description */}
-                <TextArea
-                    placeholder="Description (optionnel)"
-                    value={formData.description}
-                    onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
-                    rows={3}
-                />
-
-                {/* Coordinates */}
-                <CoordinateInput
-                    latitudeValue={formData.latitude}
-                    longitudeValue={formData.longitude}
-                    onLatitudeChange={(value) => setFormData(prev => ({ ...prev, latitude: value }))}
-                    onLongitudeChange={(value) => setFormData(prev => ({ ...prev, longitude: value }))}
-                />
-
-                {/* Status Selection */}
-                <Dropdown
-                    options={statusOptions}
-                    value={formData.status}
-                    onChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
-                    placeholder="Statut"
-                />
-
-                {/* Action Buttons */}
-                <div className="flex justify-end space-x-3 pt-4">
-                    <Button
-                        label="Annuler"
+        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+            <div className="rounded-lg shadow-lg w-full max-w-md mx-4" style={{ backgroundColor: 'white' }}>
+                {/* Header */}
+                <div className="flex items-center justify-between p-6" style={{ backgroundColor: 'white', borderBottom: '1px solid #e5e7eb' }}>
+                    <h2 className="text-lg font-semibold" style={{ color: '#1f2937' }}>Ajouter une ville</h2>
+                    <button
                         onClick={onClose}
-                        className="px-6 py-2 rounded-lg font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-                    />
-                    <Button
-                        label="Ajouter la ville"
-                        onClick={handleSubmit}
-                        className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                            isFormValid 
-                                ? 'bg-primary hover:bg-primary-light text-white cursor-pointer' 
-                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        }`}
-                        disabled={!isFormValid}
-                    />
+                        className="hover:opacity-60 transition-opacity"
+                        style={{ color: '#9ca3af' }}
+                    >
+                        <XMarkIcon className="w-6 h-6" />
+                    </button>
+                </div>
+
+                {/* Content */}
+                <div className="p-6" style={{ backgroundColor: 'white' }}>
+                    {/* Form Fields */}
+                    <div className="space-y-4">
+                        {/* City Name */}
+                        <input
+                            type="text"
+                            placeholder="Entrez nom de la ville"
+                            value={formData.nom}
+                            onChange={(e) => setFormData(prev => ({ ...prev, nom: e.target.value }))}
+                            className="w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 text-sm"
+                            style={{
+                                borderColor: '#e5e7eb',
+                                backgroundColor: 'white',
+                                color: '#1f2937'
+                            }}
+                        />
+
+                        {/* Description */}
+                        <textarea
+                            placeholder="Entrez une description"
+                            rows={3}
+                            className="w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 text-sm resize-none"
+                            style={{
+                                borderColor: '#e5e7eb',
+                                backgroundColor: 'white',
+                                color: '#1f2937'
+                            }}
+                        />
+
+                        {/* Coordinates */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <input
+                                type="number"
+                                placeholder="Entrez Latitude"
+                                value={formData.latitude}
+                                onChange={(e) => setFormData(prev => ({ ...prev, latitude: e.target.value }))}
+                                className="w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 text-sm"
+                                style={{
+                                    borderColor: '#e5e7eb',
+                                    backgroundColor: 'white',
+                                    color: '#1f2937'
+                                }}
+                            />
+                            <input
+                                type="number"
+                                placeholder="Entrez Longitude"
+                                value={formData.longitude}
+                                onChange={(e) => setFormData(prev => ({ ...prev, longitude: e.target.value }))}
+                                className="w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 text-sm"
+                                style={{
+                                    borderColor: '#e5e7eb',
+                                    backgroundColor: 'white',
+                                    color: '#1f2937'
+                                }}
+                            />
+                        </div>
+
+                        {/* Email */}
+                        <input
+                            type="email"
+                            placeholder="Email"
+                            value={formData.email}
+                            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                            className="w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 text-sm"
+                            style={{
+                                borderColor: '#e5e7eb',
+                                backgroundColor: 'white',
+                                color: '#1f2937'
+                            }}
+                        />
+
+                        {/* Admin Selection */}
+                        <select
+                            value={formData.adminId ?? ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, adminId: e.target.value ? parseInt(e.target.value) : undefined }))}
+                            className="w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 text-sm"
+                            style={{
+                                borderColor: '#e5e7eb',
+                                backgroundColor: 'white',
+                                color: '#1f2937'
+                            }}
+                        >
+                            <option value="">Sélectionnez un rôle</option>
+                            <option value={1}>Administrateur Principal</option>
+                            <option value={2}>Administrateur Secondaire</option>
+                            <option value={3}>Gestionnaire</option>
+                        </select>
+
+                        {/* Submit Button */}
+                        <button
+                            onClick={handleSubmit}
+                            disabled={!isFormValid}
+                            className="w-full py-3 rounded-lg font-medium transition-colors"
+                            style={{
+                                backgroundColor: isFormValid ? '#23B2A4' : '#d1d5db',
+                                color: isFormValid ? 'white' : '#6b7280',
+                                cursor: isFormValid ? 'pointer' : 'not-allowed'
+                            }}
+                        >
+                            Ajouter admin
+                        </button>
+                    </div>
                 </div>
             </div>
-        </Modal>
+        </div>
     );
 };
 

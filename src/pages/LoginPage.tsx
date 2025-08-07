@@ -1,30 +1,32 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/Button';
 import Logo from '../assets/logo.png';
 
-interface LoginFormData {
-    email: string;
-    password: string;
-    rememberMe: boolean;
-}
-
-interface LoginPageProps {
-    onLogin?: (data: LoginFormData) => void;
-}
-
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
-    const [formData, setFormData] = useState<LoginFormData>({
+const LoginPage: React.FC = () => {
+    const navigate = useNavigate();
+    const { login } = useAuth();
+    const [formData, setFormData] = useState({
         email: '',
         password: '',
         rememberMe: false
     });
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (onLogin) {
-            onLogin(formData);
-        } else {
-            console.log('Login attempted with:', formData);
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            await login(formData.email, formData.password, formData.rememberMe);
+            navigate('/dashboard');
+        } catch (error) {
+            setError(error instanceof Error ? error.message : 'Une erreur est survenue');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -45,6 +47,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
                 {/* Login Form */}
                 <form onSubmit={handleSubmit} className="w-full space-y-10">
+                    {error && (
+                        <div className="p-3 text-sm text-red-600 bg-red-100 border border-red-300 rounded-lg">
+                            {error}
+                        </div>
+                    )}
 
                     <div>
                         {/* Email Input */}
@@ -103,11 +110,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
                     {/* Submit Button */}
                     <Button
-                        className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${isFormValid
+                        className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
+                            isFormValid && !isLoading
                                 ? 'bg-teal-500 hover:bg-teal-600 text-white cursor-pointer'
-                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
-                        label="Se connecter"
-                        onClick={() => handleSubmit(new Event('submit') as unknown as React.FormEvent)} />
+                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
+                        label={isLoading ? 'Connexion...' : 'Se connecter'}
+                        onClick={() => handleSubmit(new Event('submit') as unknown as React.FormEvent)}
+                        disabled={!isFormValid || isLoading}
+                    />
                 </form>
             </div>
         </div>
