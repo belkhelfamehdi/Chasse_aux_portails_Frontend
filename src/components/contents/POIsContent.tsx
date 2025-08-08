@@ -209,7 +209,7 @@ export default function POIsContent() {
                     <div className="flex items-center justify-end space-x-2">
                       <button
                         title="Modifier"
-                        className="text-blue-600 transition-colors hover:text-blue-800"
+                        className="text-link transition-colors hover:text-blue-800"
                       >
                         <span className="text-sm">Edit</span>
                       </button>
@@ -218,7 +218,7 @@ export default function POIsContent() {
                         title="Supprimer"
                         onClick={() => handleDeletePOI(poi.id)}
                         disabled={isDeleting === poi.id}
-                        className="text-red-600 transition-colors hover:text-red-800 disabled:opacity-50"
+                        className="text-link transition-colors hover:text-red-800 disabled:opacity-50"
                       >
                         {isDeleting === poi.id ? (
                           <Loading size="sm" />

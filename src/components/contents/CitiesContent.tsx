@@ -155,16 +155,16 @@ const CitiesContent: React.FC = () => {
                     <div className="flex items-center justify-end space-x-2">
                       <button
                         title="Modifier"
-                        className="text-blue-600 transition-colors hover:text-blue-800"
+                        className="text-link font-semibold transition-colors hover:text-blue-800"
                       >
                         <span className="text-sm">Edit</span>
                       </button>
-                      <span className="text-gray-300">|</span>
+                      <span className="text-gray-300 font-semibold">|</span>
                       <button
                         title="Supprimer"
                         onClick={() => handleDeleteCity(city.id)}
                         disabled={isDeleting === city.id}
-                        className="text-red-600 transition-colors hover:text-red-800 disabled:opacity-50"
+                        className="text-link font-semibold transition-colors hover:text-red-800 disabled:opacity-50"
                       >
                         {isDeleting === city.id ? (
                           <Loading size="sm" />

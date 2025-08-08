@@ -198,7 +198,7 @@ export default function AdminsContent() {
                     <div className="flex items-center justify-end space-x-2">
                       <button
                         title="Modifier"
-                        className="text-blue-600 transition-colors hover:text-blue-800"
+                        className="text-link font-semibold transition-colors hover:text-blue-800"
                       >
                         <span className="text-sm">Edit</span>
                       </button>
@@ -207,7 +207,7 @@ export default function AdminsContent() {
                         title="Supprimer"
                         onClick={() => handleDeleteAdmin(admin.id)}
                         disabled={isDeleting === admin.id}
-                        className="text-red-600 transition-colors hover:text-red-800 disabled:opacity-50"
+                        className="text-link font-semibold transition-colors hover:text-red-800 disabled:opacity-50"
                       >
                         {isDeleting === admin.id ? (
                           <Loading size="sm" />
