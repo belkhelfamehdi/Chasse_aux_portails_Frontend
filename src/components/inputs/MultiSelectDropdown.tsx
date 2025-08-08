@@ -35,9 +35,10 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
     const dropdownRef = useRef<HTMLDivElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
-    // Filter options based on search term
+    // Filter options based on search term and exclude already selected options
     const filteredOptions = options.filter(option =>
-        option.label.toLowerCase().includes(searchTerm.toLowerCase())
+        option.label.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !selectedValues.includes(option.value)
     );
 
     const selectedOptions = options.filter(option => 
@@ -67,12 +68,10 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
     const handleToggleOption = (optionValue: string | number) => {
         if (disabled) return;
         
+        // Since filtered options exclude selected items, we only need to add
         const isSelected = selectedValues.includes(optionValue);
         
-        if (isSelected) {
-            // Remove from selection
-            onChange(selectedValues.filter(value => value !== optionValue));
-        } else {
+        if (!isSelected) {
             // Add to selection
             onChange([...selectedValues, optionValue]);
         }
@@ -110,15 +109,16 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
             
             <button
                 type="button"
-                className={`flex items-center justify-between w-full px-3 py-3 text-left text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
+                className={`flex items-start justify-between w-full px-3 py-3 text-left text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
                     disabled 
                         ? 'opacity-50 cursor-not-allowed bg-gray-50' 
                         : 'bg-white hover:border-gray-400'
-                }`}
+                } ${selectedOptions.length > 3 ? 'items-start' : 'items-center'}`}
                 style={{
                     borderColor: '#e5e7eb',
                     backgroundColor: disabled ? '#f9fafb' : 'white',
-                    color: selectedOptions.length > 0 ? '#1f2937' : '#9ca3af'
+                    color: selectedOptions.length > 0 ? '#1f2937' : '#9ca3af',
+                    minHeight: selectedOptions.length > 3 ? '80px' : '44px'
                 }}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 onKeyDown={handleKeyDown}
@@ -126,32 +126,30 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                 aria-expanded={isOpen}
                 disabled={disabled}
             >
-                <div className="flex flex-wrap items-center gap-1 flex-1 min-h-[20px]">
+                <div className="flex flex-wrap items-center gap-1 flex-1 min-h-[20px] max-h-24 overflow-y-auto">
                     {selectedOptions.length === 0 && (
                         <span className="text-gray-400">{placeholder}</span>
                     )}
-                    {selectedOptions.length > 0 && selectedOptions.length <= 3 && (
-                        selectedOptions.map((option) => (
-                            <span
-                                key={option.value}
-                                className="inline-flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-md"
-                            >
-                                {option.label}
-                                <button
-                                    type="button"
-                                    className="ml-1 hover:text-blue-600"
-                                    onClick={(e) => handleRemoveOption(option.value, e)}
-                                    disabled={disabled}
+                    {selectedOptions.length > 0 && (
+                        <>
+                            {selectedOptions.map((option) => (
+                                <span
+                                    key={option.value}
+                                    className="inline-flex items-center px-2 py-1 text-xs text-blue-800 bg-blue-100 rounded-md whitespace-nowrap"
                                 >
-                                    ×
-                                </button>
-                            </span>
-                        ))
-                    )}
-                    {selectedOptions.length > 3 && (
-                        <span className="text-gray-700">
-                            {selectedOptions.length} villes sélectionnées
-                        </span>
+                                    {option.label}
+                                    <button
+                                        type="button"
+                                        className="ml-1 hover:text-blue-600 focus:outline-none"
+                                        onClick={(e) => handleRemoveOption(option.value, e)}
+                                        disabled={disabled}
+                                        aria-label={`Remove ${option.label}`}
+                                    >
+                                        ×
+                                    </button>
+                                </span>
+                            ))}
+                        </>
                     )}
                 </div>
                 <svg
@@ -188,45 +186,30 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                     <div className="overflow-auto" style={{ maxHeight: '200px' }}>
                         {filteredOptions.length > 0 ? (
                             <div className="py-1">
-                                {filteredOptions.map((option) => {
-                                    const isSelected = selectedValues.includes(option.value);
-                                    return (
-                                        <button
-                                            key={option.value}
-                                            type="button"
-                                            className={`w-full px-3 py-2 text-left text-sm hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex items-center justify-between ${
-                                                isSelected ? 'bg-blue-100 text-blue-900' : 'text-gray-700'
-                                            }`}
-                                            onClick={() => handleToggleOption(option.value)}
-                                        >
-                                            <span>{option.label}</span>
-                                            {isSelected && (
-                                                <svg
-                                                    className="w-4 h-4 text-blue-600"
-                                                    fill="currentColor"
-                                                    viewBox="0 0 20 20"
-                                                >
-                                                    <path
-                                                        fillRule="evenodd"
-                                                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                        clipRule="evenodd"
-                                                    />
-                                                </svg>
-                                            )}
-                                        </button>
-                                    );
-                                })}
+                                {filteredOptions.map((option) => (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        className="w-full px-3 py-2 text-sm text-left text-gray-700 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none"
+                                        onClick={() => handleToggleOption(option.value)}
+                                    >
+                                        <span>{option.label}</span>
+                                    </button>
+                                ))}
                             </div>
                         ) : (
-                            <div className="px-3 py-4 text-sm text-gray-500 text-center">
-                                Aucune option trouvée
+                            <div className="px-3 py-4 text-sm text-center text-gray-500">
+                                {selectedValues.length === options.length ? 
+                                    'Toutes les options sont sélectionnées' : 
+                                    'Aucune option trouvée'
+                                }
                             </div>
                         )}
                     </div>
 
                     {/* Selected Count Footer */}
                     {selectedOptions.length > 0 && (
-                        <div className="px-3 py-2 border-t border-gray-200 text-xs text-gray-600 bg-gray-50">
+                        <div className="px-3 py-2 text-xs text-gray-600 border-t border-gray-200 bg-gray-50">
                             {selectedOptions.length} ville{selectedOptions.length > 1 ? 's' : ''} sélectionnée{selectedOptions.length > 1 ? 's' : ''}
                         </div>
                     )}

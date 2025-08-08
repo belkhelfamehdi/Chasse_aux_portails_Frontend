@@ -66,8 +66,8 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle = "Welcome ba
     return (
         <div className="flex min-h-screen bg-gray-100">
             {/* Sidebar */}
-            <div className="flex flex-col w-16 transition-all duration-300 ease-in-out bg-white shadow-lg group hover:w-64">
-                <div className="flex items-center self-center justify-center p-6">
+            <div className="flex flex-col justify-between w-16 transition-all duration-300 ease-in-out bg-white shadow-lg group hover:w-64">
+                <div className="flex items-center self-center justify-center pt-6">
                     <img
                         src={Logo}
                         alt="Logo"
@@ -75,8 +75,8 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle = "Welcome ba
                     />
                 </div>
 
-                <nav className="flex-1 px-3 pb-6 transition-all duration-300 ease-in-out group-hover:px-6">
-                    <ul className="space-y-2">
+                <nav className="px-3 pb-6 transition-all duration-300 ease-in-out group-hover:px-6">
+                    <ul className="space-y-4">
                         {filteredNavigationItems.map((item) => {
                             const Icon = item.icon;
                             const isActive = location.pathname === item.path;
