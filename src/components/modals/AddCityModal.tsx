@@ -123,44 +123,28 @@ const AddCityModal: React.FC<AddCityModalProps> = ({ isOpen, onClose, onSubmit, 
                         disabled={isLoading}
                     />
 
-                    {/* Admin Selection */}
-                    <select
-                        value={formData.adminId ?? ''}
-                        onChange={(e) => setFormData(prev => ({ ...prev, adminId: e.target.value ? parseInt(e.target.value) : undefined }))}
-                        disabled={isLoading}
-                        className="w-full px-3 py-3 text-sm border rounded-lg focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        style={{
-                            borderColor: '#e5e7eb',
-                            backgroundColor: isLoading ? '#f9fafb' : 'white',
-                            color: '#1f2937'
-                        }}
-                    >
-                        <option value="">Sélectionnez un rôle</option>
-                        <option value={1}>Administrateur Principal</option>
-                        <option value={2}>Administrateur Secondaire</option>
-                        <option value={3}>Gestionnaire</option>
-                    </select>
-
                     {/* Submit Button */}
-                    <button
-                        onClick={handleSubmit}
-                        disabled={!isFormValid || isLoading}
-                        className="w-full py-3 font-medium transition-colors rounded-lg flex items-center justify-center"
-                        style={{
-                            backgroundColor: (isFormValid && !isLoading) ? '#23B2A4' : '#d1d5db',
-                            color: (isFormValid && !isLoading) ? 'white' : '#6b7280',
-                            cursor: (isFormValid && !isLoading) ? 'pointer' : 'not-allowed'
-                        }}
-                    >
-                        {isLoading ? (
-                            <>
-                                <Loading size="sm" />
-                                <span className="ml-2">Adding...</span>
-                            </>
-                        ) : (
-                            'Ajouter ville'
-                        )}
-                    </button>
+                    <div className="flex justify-end">
+                        <button
+                            onClick={handleSubmit}
+                            disabled={!isFormValid || isLoading}
+                            className="flex items-center justify-center px-4 py-2 font-normal transition-colors rounded-lg"
+                            style={{
+                                backgroundColor: (isFormValid && !isLoading) ? '#23B2A4' : '#d1d5db',
+                                color: (isFormValid && !isLoading) ? 'white' : '#6b7280',
+                                cursor: (isFormValid && !isLoading) ? 'pointer' : 'not-allowed'
+                            }}
+                        >
+                            {isLoading ? (
+                                <>
+                                    <Loading size="sm" />
+                                    <span className="ml-2">Adding...</span>
+                                </>
+                            ) : (
+                                'Ajouter ville'
+                            )}
+                        </button>
+                    </div>
                 </div>
             </div>
         </Modal>

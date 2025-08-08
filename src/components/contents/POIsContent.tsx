@@ -27,7 +27,7 @@ interface POIFormData {
   longitude: number;
   iconUrl: string;
   modelUrl: string;
-  cityIds: number[];
+  cityId: number;
 }
 
 export default function POIsContent() {
@@ -117,42 +117,19 @@ export default function POIsContent() {
   const handleAddPOI = async (poiData: POIFormData) => {
     try {
       setIsSubmitting(true);
-      
-      // Create a POI for each selected city
-      const newPOIs: POI[] = [];
-      
-      for (const cityId of poiData.cityIds) {
-        try {
-          // Create single POI data for backend compatibility
-          const singlePOIData = {
-            ...poiData,
-            cityId: cityId
-          };
-          
-          const response = await poisAPI.create(singlePOIData);
-          newPOIs.push(response as POI);
-        } catch (error) {
-          console.error(`Error adding POI for city ${cityId}:`, error);
-          // Fallback to local state update
-          const newPOI: POI = {
-            id: Math.max(...pois.map(p => p.id), 0) + newPOIs.length + 1,
-            nom: poiData.nom,
-            description: poiData.description,
-            latitude: poiData.latitude,
-            longitude: poiData.longitude,
-            iconUrl: poiData.iconUrl,
-            modelUrl: poiData.modelUrl,
-            cityId: cityId,
-            city: pois.find(p => p.cityId === cityId)?.city
-          };
-          newPOIs.push(newPOI);
-        }
-      }
-      
-      setPois([...pois, ...newPOIs]);
+      const response = await poisAPI.create(poiData);
+      setPois([...pois, response as POI]);
       setIsAddModalOpen(false);
     } catch (error) {
-      console.error('Error adding POIs:', error);
+      console.error('Error adding POI:', error);
+      // Fallback to local state update
+      const newPOI: POI = {
+        id: Math.max(...pois.map(p => p.id), 0) + 1,
+        ...poiData,
+        city: pois.find(p => p.cityId === poiData.cityId)?.city
+      };
+      setPois([...pois, newPOI]);
+      setIsAddModalOpen(false);
     } finally {
       setIsSubmitting(false);
     }

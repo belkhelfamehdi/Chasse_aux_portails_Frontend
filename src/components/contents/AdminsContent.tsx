@@ -24,6 +24,8 @@ interface AdminFormData {
   lastname: string;
   email: string;
   role: Admin['role'];
+  cityIds: number[];
+  profilePicture?: File | null;
 }
 
 export default function AdminsContent() {

@@ -4,7 +4,7 @@ import DashboardContent from '../../components/contents/DashboardContent';
 
 const DashboardPage: React.FC = () => {
   return (
-    <Layout title="Chasse aux portails" subtitle="Welcome back">
+    <Layout title="Chasse aux portails">
       <DashboardContent />
     </Layout>
   );

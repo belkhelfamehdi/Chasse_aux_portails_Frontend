@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ProfilePictureUpload from '../inputs/ProfilePictureUpload';
 import FileUpload from '../inputs/FileUpload';
-import { TextInput, TextArea, MultiSelectDropdown } from '../inputs';
+import { TextInput, TextArea, Dropdown } from '../inputs';
 import Modal from './Modal';
 import Loading from '../Loading';
 
@@ -19,7 +19,7 @@ interface POIFormData {
     longitude: number;
     iconUrl: string;
     modelUrl: string;
-    cityIds: number[];
+    cityId: number;
 }
 
 const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, isLoading = false }) => {
@@ -30,7 +30,7 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, is
         longitude: '',
         iconUrl: '',
         modelUrl: '',
-        cityIds: [] as number[]
+        cityId: 0
     });
     const [selectedIcon, setSelectedIcon] = useState<File | null>(null);
     const [selectedModel, setSelectedModel] = useState<File | null>(null);
@@ -43,7 +43,7 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, is
             longitude: parseFloat(formData.longitude),
             iconUrl: selectedIcon ? URL.createObjectURL(selectedIcon) : formData.iconUrl,
             modelUrl: selectedModel ? URL.createObjectURL(selectedModel) : formData.modelUrl,
-            cityIds: formData.cityIds
+            cityId: formData.cityId
         };
 
         await onSubmit(poiData);
@@ -57,7 +57,7 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, is
                 longitude: '',
                 iconUrl: '',
                 modelUrl: '',
-                cityIds: []
+                cityId: 0
             });
             setSelectedIcon(null);
             setSelectedModel(null);
@@ -88,7 +88,7 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, is
         }
     };
 
-    const isFormValid = formData.nom && formData.latitude && formData.longitude && formData.cityIds.length > 0;
+    const isFormValid = formData.nom && formData.latitude && formData.longitude && formData.cityId > 0;
 
     if (!isOpen) return null;
 
@@ -149,29 +149,28 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, is
                         />
                     </div>
 
-                    {/* Cities Selection */}
-                    <MultiSelectDropdown
+                    {/* City Selection */}
+                    <Dropdown
                         options={[
-                            { value: 1, label: 'Paris' },
-                            { value: 2, label: 'New York' },
-                            { value: 3, label: 'Tokyo' },
-                            { value: 4, label: 'Londres' },
-                            { value: 5, label: 'Madrid' },
-                            { value: 6, label: 'Berlin' },
-                            { value: 7, label: 'Rome' },
-                            { value: 8, label: 'Barcelona' },
-                            { value: 9, label: 'Amsterdam' },
-                            { value: 10, label: 'Sydney' }
+                            { value: '', label: 'Sélectionnez une ville' },
+                            { value: '1', label: 'Paris' },
+                            { value: '2', label: 'New York' },
+                            { value: '3', label: 'Tokyo' },
+                            { value: '4', label: 'Londres' },
+                            { value: '5', label: 'Madrid' },
+                            { value: '6', label: 'Berlin' },
+                            { value: '7', label: 'Rome' },
+                            { value: '8', label: 'Barcelona' },
+                            { value: '9', label: 'Amsterdam' },
+                            { value: '10', label: 'Sydney' }
                         ]}
-                        selectedValues={formData.cityIds}
-                        onChange={(values) => setFormData(prev => ({ 
+                        value={formData.cityId.toString()}
+                        onChange={(value) => setFormData(prev => ({ 
                             ...prev, 
-                            cityIds: values as number[] 
+                            cityId: parseInt(value) || 0
                         }))}
-                        placeholder="Sélectionnez des villes"
-                        searchPlaceholder="Rechercher une ville..."
-                        label="Villes"
-                        disabled={isLoading}
+                        placeholder="Sélectionnez une ville"
+                        label="Ville"
                         required
                     />
 
@@ -186,25 +185,27 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, is
                     />
 
                     {/* Submit Button */}
-                    <button
-                        onClick={handleSubmit}
-                        disabled={!isFormValid || isLoading}
-                        className="flex items-center justify-center w-full py-3 font-medium transition-colors rounded-lg"
-                        style={{
-                            backgroundColor: (isFormValid && !isLoading) ? '#23B2A4' : '#d1d5db',
-                            color: (isFormValid && !isLoading) ? 'white' : '#6b7280',
-                            cursor: (isFormValid && !isLoading) ? 'pointer' : 'not-allowed'
-                        }}
-                    >
-                        {isLoading ? (
-                            <>
-                                <Loading size="sm" />
-                                <span className="ml-2">Adding...</span>
-                            </>
-                        ) : (
-                            'Ajouter POI'
-                        )}
-                    </button>
+                    <div className="flex justify-end">
+                        <button
+                            onClick={handleSubmit}
+                            disabled={!isFormValid || isLoading}
+                            className="flex items-center justify-center px-4 py-2 font-normal transition-colors rounded-lg"
+                            style={{
+                                backgroundColor: (isFormValid && !isLoading) ? '#23B2A4' : '#d1d5db',
+                                color: (isFormValid && !isLoading) ? 'white' : '#6b7280',
+                                cursor: (isFormValid && !isLoading) ? 'pointer' : 'not-allowed'
+                            }}
+                        >
+                            {isLoading ? (
+                                <>
+                                    <Loading size="sm" />
+                                    <span className="ml-2">Adding...</span>
+                                </>
+                            ) : (
+                                'Ajouter POI'
+                            )}
+                        </button>
+                    </div>
                 </div>
             </div>
         </Modal>

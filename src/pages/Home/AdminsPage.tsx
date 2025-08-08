@@ -4,7 +4,7 @@ import AdminsContent from '../../components/contents/AdminsContent';
 
 const AdminsPage: React.FC = () => {
   return (
-    <Layout title="Gestion des Admins" subtitle="Gérez tous les administrateurs">
+    <Layout title="Gestion des Admins">
       <AdminsContent />
     </Layout>
   );

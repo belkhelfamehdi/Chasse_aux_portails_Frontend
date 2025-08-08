@@ -8,10 +8,9 @@ import Logo from '../assets/logo.png';
 interface LayoutProps {
     children: ReactNode;
     title: string;
-    subtitle?: string;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, title, subtitle = "Welcome back" }) => {
+const Layout: React.FC<LayoutProps> = ({ children, title }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, logout } = useAuth();
@@ -23,6 +22,27 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle = "Welcome ba
         { path: '/admins', icon: UsersIcon, label: 'Admins', requiresSuperAdmin: true },
         { path: '/settings', icon: Cog6ToothIcon, label: 'Paramètres' },
     ];
+
+    // Generate breadcrumb based on current path
+    const generateBreadcrumb = () => {
+        const pathSegments = location.pathname.split('/').filter(segment => segment !== '');
+        
+        // Handle root/dashboard case
+        if (pathSegments.length === 0 || pathSegments[0] === 'dashboard') {
+            return 'Dashboard';
+        }
+        
+        const breadcrumbItems = ['Dashboard'];
+        
+        for (const segment of pathSegments) {
+            const navItem = navigationItems.find(item => item.path === `/${segment}`);
+            if (navItem && navItem.label !== 'Dashboard') {
+                breadcrumbItems.push(navItem.label);
+            }
+        }
+        
+        return breadcrumbItems.join(' > ');
+    };
 
     // Filter navigation items based on user role
     const filteredNavigationItems = navigationItems.filter(item => {
@@ -89,7 +109,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle = "Welcome ba
                                                 ? 'text-primary bg-primary/10'
                                                 : 'text-gray-600 hover:text-primary hover:bg-gray-50'
                                             }`}
-                                        title={item.label} // Tooltip for collapsed state
+                                        title={item.label}
                                     >
                                         <Icon className="flex-shrink-0 w-5 h-auto" />
                                         <span className="overflow-hidden transition-opacity duration-300 ease-in-out opacity-0 group-hover:opacity-100 whitespace-nowrap">
@@ -124,7 +144,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle = "Welcome ba
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-xl font-semibold text-gray-800">{title}</h1>
-                            <p className="text-sm font-light text-primary">{subtitle}</p>
+                            <p className="text-sm font-light text-primary">{generateBreadcrumb()}</p>
                         </div>
                         <div className="flex items-center space-x-4">
                             <div className="flex items-center mr-5 space-x-3">

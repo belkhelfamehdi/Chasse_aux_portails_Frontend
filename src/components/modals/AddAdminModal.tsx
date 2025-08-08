@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ProfilePictureUpload, TextInput } from '../inputs';
+import { ProfilePictureUpload, TextInput, MultiSelectDropdown } from '../inputs';
 import Modal from './Modal';
 import Loading from '../Loading';
 
@@ -15,6 +15,7 @@ interface AdminFormData {
     lastname: string;
     email: string;
     role: 'SUPER_ADMIN' | 'ADMIN';
+    cityIds: number[];
     profilePicture?: File | null;
 }
 
@@ -23,7 +24,8 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
         firstname: '',
         lastname: '',
         email: '',
-        role: 'ADMIN' as 'SUPER_ADMIN' | 'ADMIN'
+        role: 'ADMIN' as 'SUPER_ADMIN' | 'ADMIN',
+        cityIds: [] as number[]
     });
 
     const [selectedProfilePicture, setSelectedProfilePicture] = useState<File | null>(null);
@@ -38,6 +40,7 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
             lastname: formData.lastname,
             email: formData.email,
             role: formData.role,
+            cityIds: formData.cityIds,
             profilePicture: selectedProfilePicture
         };
 
@@ -49,13 +52,15 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
                 firstname: '',
                 lastname: '',
                 email: '',
-                role: 'ADMIN'
+                role: 'ADMIN',
+                cityIds: []
             });
             setSelectedProfilePicture(null);
         }
     };
 
-    const isFormValid = formData.firstname && formData.lastname && formData.email;
+    const isFormValid = formData.firstname && formData.lastname && formData.email && 
+        (formData.role === 'SUPER_ADMIN' || (formData.role === 'ADMIN' && formData.cityIds.length > 0));
 
     if (!isOpen) return null;
 
@@ -118,7 +123,11 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
                             </button>
                             <button
                                 type="button"
-                                onClick={() => setFormData(prev => ({ ...prev, role: 'SUPER_ADMIN' }))}
+                                onClick={() => setFormData(prev => ({ 
+                                    ...prev, 
+                                    role: 'SUPER_ADMIN',
+                                    cityIds: [] // Clear cities when switching to SUPER_ADMIN
+                                }))}
                                 disabled={isLoading}
                                 className={`px-3 py-2 text-xs rounded-full border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${formData.role === 'SUPER_ADMIN'
                                         ? 'bg-[#23B2A4] text-white border-[#23B2A4]'
@@ -130,26 +139,56 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
                         </div>
                     </div>
 
+                    {/* Cities Selection - Only show for ADMIN role */}
+                    {formData.role === 'ADMIN' && (
+                        <MultiSelectDropdown
+                            options={[
+                                { value: 1, label: 'Paris' },
+                                { value: 2, label: 'New York' },
+                                { value: 3, label: 'Tokyo' },
+                                { value: 4, label: 'Londres' },
+                                { value: 5, label: 'Madrid' },
+                                { value: 6, label: 'Berlin' },
+                                { value: 7, label: 'Rome' },
+                                { value: 8, label: 'Barcelona' },
+                                { value: 9, label: 'Amsterdam' },
+                                { value: 10, label: 'Sydney' }
+                            ]}
+                            selectedValues={formData.cityIds}
+                            onChange={(values) => setFormData(prev => ({ 
+                                ...prev, 
+                                cityIds: values as number[] 
+                            }))}
+                            placeholder="Sélectionnez des villes"
+                            searchPlaceholder="Rechercher une ville..."
+                            label="Villes à administrer"
+                            disabled={isLoading}
+                            required={formData.role === 'ADMIN'}
+                        />
+                    )}
+
                     {/* Submit Button */}
-                    <button
-                        onClick={handleSubmit}
-                        disabled={!isFormValid || isLoading}
-                        className="w-full py-3 font-medium transition-colors rounded-lg flex items-center justify-center"
-                        style={{
-                            backgroundColor: (isFormValid && !isLoading) ? '#23B2A4' : '#d1d5db',
-                            color: (isFormValid && !isLoading) ? 'white' : '#6b7280',
-                            cursor: (isFormValid && !isLoading) ? 'pointer' : 'not-allowed'
-                        }}
-                    >
-                        {isLoading ? (
-                            <>
-                                <Loading size="sm" />
-                                <span className="ml-2">Adding...</span>
-                            </>
-                        ) : (
-                            'Ajouter admin'
-                        )}
-                    </button>
+                    <div className="flex justify-end">
+                        <button
+                            onClick={handleSubmit}
+                            disabled={!isFormValid || isLoading}
+                            className="flex items-center justify-center px-4 py-2 font-normal transition-colors rounded-lg"
+                            style={{
+                                backgroundColor: (isFormValid && !isLoading) ? '#23B2A4' : '#d1d5db',
+                                color: (isFormValid && !isLoading) ? 'white' : '#6b7280',
+                                cursor: (isFormValid && !isLoading) ? 'pointer' : 'not-allowed'
+                            }}
+                        >
+                            {isLoading ? (
+                                <>
+                                    <Loading size="sm" />
+                                    <span className="ml-2">Adding...</span>
+                                </>
+                            ) : (
+                                'Ajouter admin'
+                            )}
+                        </button>
+                    </div>
                 </div>
             </div>
         </Modal>

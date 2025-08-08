@@ -4,7 +4,7 @@ import POIsContent from '../../components/contents/POIsContent';
 
 const POIsPage: React.FC = () => {
   return (
-    <Layout title="Gestion des POIs" subtitle="Gérez tous les points d'intérêt">
+    <Layout title="Gestion des POIs">
       <POIsContent />
     </Layout>
   );

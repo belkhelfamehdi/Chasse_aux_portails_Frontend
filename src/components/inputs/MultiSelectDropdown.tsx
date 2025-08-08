@@ -41,7 +41,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
         !selectedValues.includes(option.value)
     );
 
-    const selectedOptions = options.filter(option => 
+    const selectedOptions = options.filter(option =>
         selectedValues.includes(option.value)
     );
 
@@ -67,10 +67,10 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
 
     const handleToggleOption = (optionValue: string | number) => {
         if (disabled) return;
-        
+
         // Since filtered options exclude selected items, we only need to add
         const isSelected = selectedValues.includes(optionValue);
-        
+
         if (!isSelected) {
             // Add to selection
             onChange([...selectedValues, optionValue]);
@@ -106,14 +106,13 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                     {required && <span className="ml-1 text-red-500">*</span>}
                 </label>
             )}
-            
+
             <button
                 type="button"
-                className={`flex items-start justify-between w-full px-3 py-3 text-left text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
-                    disabled 
-                        ? 'opacity-50 cursor-not-allowed bg-gray-50' 
+                className={`flex items-start justify-between w-full px-3 py-3 text-left text-sm border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary transition-colors ${disabled
+                        ? 'opacity-50 cursor-not-allowed bg-gray-50'
                         : 'bg-white hover:border-gray-400'
-                } ${selectedOptions.length > 3 ? 'items-start' : 'items-center'}`}
+                    } ${selectedOptions.length > 3 ? 'items-start' : 'items-center'}`}
                 style={{
                     borderColor: '#e5e7eb',
                     backgroundColor: disabled ? '#f9fafb' : 'white',
@@ -135,12 +134,12 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                             {selectedOptions.map((option) => (
                                 <span
                                     key={option.value}
-                                    className="inline-flex items-center px-2 py-1 text-xs text-blue-800 bg-blue-100 rounded-md whitespace-nowrap"
+                                    className="inline-flex items-center px-2 py-1 text-xs rounded-lg text-secondary bg-secondary-bg whitespace-nowrap"
                                 >
                                     {option.label}
                                     <button
                                         type="button"
-                                        className="ml-1 hover:text-blue-600 focus:outline-none"
+                                        className="ml-1 hover:text-secondary focus:outline-none"
                                         onClick={(e) => handleRemoveOption(option.value, e)}
                                         disabled={disabled}
                                         aria-label={`Remove ${option.label}`}
@@ -153,9 +152,8 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                     )}
                 </div>
                 <svg
-                    className={`w-4 h-4 transition-transform ml-2 flex-shrink-0 ${
-                        isOpen ? 'rotate-180' : ''
-                    }`}
+                    className={`w-4 h-4 transition-transform ml-2 flex-shrink-0 ${isOpen ? 'rotate-180' : ''
+                        }`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -165,7 +163,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
             </button>
 
             {isOpen && !disabled && (
-                <div 
+                <div
                     className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg"
                     style={{ maxHeight }}
                 >
@@ -174,7 +172,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                         <input
                             ref={searchInputRef}
                             type="text"
-                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
                             placeholder={searchPlaceholder}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -199,20 +197,13 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                             </div>
                         ) : (
                             <div className="px-3 py-4 text-sm text-center text-gray-500">
-                                {selectedValues.length === options.length ? 
-                                    'Toutes les options sont sélectionnées' : 
+                                {selectedValues.length === options.length ?
+                                    'Toutes les options sont sélectionnées' :
                                     'Aucune option trouvée'
                                 }
                             </div>
                         )}
                     </div>
-
-                    {/* Selected Count Footer */}
-                    {selectedOptions.length > 0 && (
-                        <div className="px-3 py-2 text-xs text-gray-600 border-t border-gray-200 bg-gray-50">
-                            {selectedOptions.length} ville{selectedOptions.length > 1 ? 's' : ''} sélectionnée{selectedOptions.length > 1 ? 's' : ''}
-                        </div>
-                    )}
                 </div>
             )}
         </div>
