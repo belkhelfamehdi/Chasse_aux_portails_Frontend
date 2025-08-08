@@ -23,6 +23,7 @@ interface AdminFormData {
   firstname: string;
   lastname: string;
   email: string;
+  password: string;
   role: Admin['role'];
   cityIds: number[];
   profilePicture?: File | null;
@@ -48,50 +49,8 @@ export default function AdminsContent() {
       setAdmins(response as Admin[]);
     } catch (error) {
       console.error('Error loading admins:', error);
-      // Use mock data as fallback
-      const mockAdmins: Admin[] = [
-        {
-          id: '1',
-          firstname: 'Grand Plaza',
-          lastname: 'Fountain',
-          email: 'example@email.com',
-          role: 'ADMIN',
-          cities: []
-        },
-        {
-          id: '2',
-          firstname: 'Apex',
-          lastname: 'Tower',
-          email: 'example@email.com',
-          role: 'ADMIN',
-          cities: []
-        },
-        {
-          id: '3',
-          firstname: 'Bright',
-          lastname: 'Square',
-          email: 'example@email.com',
-          role: 'ADMIN',
-          cities: []
-        },
-        {
-          id: '4',
-          firstname: 'National Museum',
-          lastname: 'of Art',
-          email: 'example@email.com',
-          role: 'ADMIN',
-          cities: []
-        },
-        {
-          id: '5',
-          firstname: 'Liberty',
-          lastname: 'Bridge',
-          email: 'example@email.com',
-          role: 'ADMIN',
-          cities: []
-        }
-      ];
-      setAdmins(mockAdmins);
+      // Initialize empty array on error - user will see "no admins found" message
+      setAdmins([]);
     } finally {
       setIsLoading(false);
     }
@@ -100,19 +59,13 @@ export default function AdminsContent() {
   const handleAddAdmin = async (adminData: AdminFormData) => {
     try {
       setIsSubmitting(true);
-      const response = await adminsAPI.create(adminData);
-      setAdmins([...admins, response as Admin]);
+      await adminsAPI.create(adminData);
+      await loadAdmins(); // Reload the list to get fresh data
       setIsAddModalOpen(false);
     } catch (error) {
       console.error('Error adding admin:', error);
-      // Fallback to local state update
-      const newAdmin: Admin = {
-        id: (Math.max(...admins.map(a => parseInt(a.id))) + 1).toString(),
-        ...adminData,
-        cities: []
-      };
-      setAdmins([...admins, newAdmin]);
-      setIsAddModalOpen(false);
+      // Show error message to user instead of fallback data
+      alert('Erreur lors de l\'ajout de l\'administrateur. Veuillez réessayer.');
     } finally {
       setIsSubmitting(false);
     }
@@ -123,11 +76,10 @@ export default function AdminsContent() {
       try {
         setIsDeleting(adminId);
         await adminsAPI.delete(parseInt(adminId));
-        setAdmins(admins.filter(admin => admin.id !== adminId));
+        await loadAdmins(); // Reload the list to get fresh data
       } catch (error) {
         console.error('Error deleting admin:', error);
-        // Fallback to local state update
-        setAdmins(admins.filter(admin => admin.id !== adminId));
+        alert('Erreur lors de la suppression de l\'administrateur. Veuillez réessayer.');
       } finally {
         setIsDeleting(null);
       }

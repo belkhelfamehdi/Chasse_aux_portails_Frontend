@@ -1,13 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
-
-interface User {
-    id: number;
-    email: string;
-    role: 'SUPER_ADMIN' | 'ADMIN';
-    firstname?: string;
-    lastname?: string;
-}
+import { authAPI, type User } from '../services/api';
 
 interface AuthContextType {
     user: User | null;
@@ -62,37 +55,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setIsLoading(false);
     }, []);
 
-    const login = async (email: string, password: string, rememberMe = false): Promise<void> => {
+    const login = async (email: string, password: string): Promise<void> => {
+        setIsLoginLoading(true);
         try {
-            setIsLoginLoading(true);
-            const response = await fetch('http://localhost:3000/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include', // Important pour les cookies
-                body: JSON.stringify({ email, password }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Erreur de connexion');
-            }
-
-            const data = await response.json();
+            const response = await authAPI.login(email, password);
             
-            setUser(data.user);
-            setToken(data.accessToken);
+            setUser(response.user);
+            setToken(response.accessToken);
 
-            // Save to localStorage only if "Remember Me" is checked
-            if (rememberMe) {
-                localStorage.setItem('accessToken', data.accessToken);
-                localStorage.setItem('user', JSON.stringify(data.user));
-            }
-
-        } catch (error) {
-            console.error('Login error:', error);
-            throw error;
+            // Always save to localStorage for now
+            localStorage.setItem('accessToken', response.accessToken);
+            localStorage.setItem('user', JSON.stringify(response.user));
         } finally {
             setIsLoginLoading(false);
         }
@@ -101,11 +74,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const logout = async (): Promise<void> => {
         try {
             setIsLogoutLoading(true);
-            // Call logout endpoint to clear cookies
-            await fetch('http://localhost:3000/api/auth/logout', {
-                method: 'POST',
-                credentials: 'include',
-            });
+            // Try to call logout endpoint to clear cookies
+            try {
+                await authAPI.logout();
+            } catch {
+                // Ignore logout API errors - just clear local state
+                console.warn('Logout API call failed, clearing local state anyway');
+            }
         } catch (error) {
             console.error('Logout error:', error);
         } finally {
@@ -118,7 +93,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
     };
 
-    const value: AuthContextType = useMemo(() => ({
+    const value = useMemo(() => ({
         user,
         token,
         login,

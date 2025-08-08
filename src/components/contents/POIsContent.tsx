@@ -11,8 +11,8 @@ interface POI {
   description: string;
   latitude: number;
   longitude: number;
-  iconUrl: string;
-  modelUrl: string;
+  iconUrl?: string;
+  modelUrl?: string;
   cityId: number;
   city?: {
     id: number;
@@ -25,8 +25,10 @@ interface POIFormData {
   description: string;
   latitude: number;
   longitude: number;
-  iconUrl: string;
-  modelUrl: string;
+  iconUrl?: string;
+  modelUrl?: string;
+  iconFile?: File | null;
+  modelFile?: File | null;
   cityId: number;
 }
 
@@ -50,65 +52,8 @@ export default function POIsContent() {
       setPois(response as POI[]);
     } catch (error) {
       console.error('Error loading POIs:', error);
-      // Use mock data as fallback
-      const mockPOIs: POI[] = [
-        {
-          id: 1,
-          nom: 'Grand Plaza Fountain',
-          description: 'A beautiful fountain in the heart of Grand Plaza.',
-          latitude: 40.7812,
-          longitude: -73.9665,
-          iconUrl: 'https://example.com/fountain-icon.png',
-          modelUrl: 'https://example.com/fountain-model.glb',
-          cityId: 1,
-          city: { id: 1, nom: 'New York' }
-        },
-        {
-          id: 2,
-          nom: 'Apex Tower',
-          description: 'Iconic skyscraper with observation decks.',
-          latitude: 40.7484,
-          longitude: -73.9857,
-          iconUrl: 'https://example.com/tower-icon.png',
-          modelUrl: 'https://example.com/tower-model.glb',
-          cityId: 1,
-          city: { id: 1, nom: 'New York' }
-        },
-        {
-          id: 3,
-          nom: 'Bright Square',
-          description: 'Vibrant commercial and entertainment hub.',
-          latitude: 40.7589,
-          longitude: -73.9851,
-          iconUrl: 'https://example.com/square-icon.png',
-          modelUrl: 'https://example.com/square-model.glb',
-          cityId: 1,
-          city: { id: 1, nom: 'New York' }
-        },
-        {
-          id: 4,
-          nom: 'National Museum of Art',
-          description: 'One of the world\'s largest and finest art museums.',
-          latitude: 40.7794,
-          longitude: -73.9632,
-          iconUrl: 'https://example.com/museum-icon.png',
-          modelUrl: 'https://example.com/museum-model.glb',
-          cityId: 1,
-          city: { id: 1, nom: 'New York' }
-        },
-        {
-          id: 5,
-          nom: 'Liberty Bridge',
-          description: 'Historic suspension bridge connecting Manhattan and Brooklyn.',
-          latitude: 40.7061,
-          longitude: -73.9969,
-          iconUrl: 'https://example.com/bridge-icon.png',
-          modelUrl: 'https://example.com/bridge-model.glb',
-          cityId: 1,
-          city: { id: 1, nom: 'New York' }
-        }
-      ];
-      setPois(mockPOIs);
+      // Initialize empty array on error - user will see "no POIs found" message
+      setPois([]);
     } finally {
       setIsLoading(false);
     }
@@ -117,19 +62,13 @@ export default function POIsContent() {
   const handleAddPOI = async (poiData: POIFormData) => {
     try {
       setIsSubmitting(true);
-      const response = await poisAPI.create(poiData);
-      setPois([...pois, response as POI]);
+      await poisAPI.create(poiData);
+      await loadPOIs(); // Reload the list to get fresh data
       setIsAddModalOpen(false);
     } catch (error) {
       console.error('Error adding POI:', error);
-      // Fallback to local state update
-      const newPOI: POI = {
-        id: Math.max(...pois.map(p => p.id), 0) + 1,
-        ...poiData,
-        city: pois.find(p => p.cityId === poiData.cityId)?.city
-      };
-      setPois([...pois, newPOI]);
-      setIsAddModalOpen(false);
+      // Show error message to user instead of fallback data
+      alert('Erreur lors de l\'ajout du POI. Veuillez réessayer.');
     } finally {
       setIsSubmitting(false);
     }
@@ -140,11 +79,10 @@ export default function POIsContent() {
       try {
         setIsDeleting(poiId);
         await poisAPI.delete(poiId);
-        setPois(pois.filter(poi => poi.id !== poiId));
+        await loadPOIs(); // Reload the list to get fresh data
       } catch (error) {
         console.error('Error deleting POI:', error);
-        // Fallback to local state update
-        setPois(pois.filter(poi => poi.id !== poiId));
+        alert('Erreur lors de la suppression du POI. Veuillez réessayer.');
       } finally {
         setIsDeleting(null);
       }
@@ -161,18 +99,20 @@ export default function POIsContent() {
     return `${latitude.toFixed(4)}° N, ${Math.abs(longitude).toFixed(4)}° ${longitude >= 0 ? 'E' : 'W'}`;
   };
 
-  const getIconDisplay = (iconUrl: string) => {
-    // Simple icon mapping for demo
+  const getIconDisplay = (iconUrl?: string) => {
+    if (!iconUrl) return '📍'; // Default icon if no URL provided
+    
+    // Simple icon mapping for demo - matching the UI design icons
     const iconMap: { [key: string]: string } = {
-      'fountain': '🏛️',
-      'tower': '🏢',
-      'square': '📍',
-      'museum': '🏛️',
-      'bridge': '🌉'
+      'fountain-icon.png': '⛲',
+      'tower-icon.png': '🏢',
+      'park-icon.png': '🌳',
+      'museum-icon.png': '🏛️',
+      'bridge-icon.png': '🌉'
     };
 
-    const iconType = Object.keys(iconMap).find(type => iconUrl.includes(type));
-    return iconType ? iconMap[iconType] : '📍';
+    const fileName = iconUrl.split('/').pop() || '';
+    return iconMap[fileName] || '📍';
   };
 
   if (isLoading) {

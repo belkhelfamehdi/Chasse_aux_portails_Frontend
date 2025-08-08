@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ProfilePictureUpload, TextInput, MultiSelectDropdown } from '../inputs';
 import Modal from './Modal';
 import Loading from '../Loading';
+import { citiesAPI } from '../../services/api';
 
 interface AddAdminModalProps {
     isOpen: boolean;
@@ -14,9 +15,15 @@ interface AdminFormData {
     firstname: string;
     lastname: string;
     email: string;
+    password: string;
     role: 'SUPER_ADMIN' | 'ADMIN';
     cityIds: number[];
     profilePicture?: File | null;
+}
+
+interface City {
+    id: number;
+    nom: string;
 }
 
 const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit, isLoading = false }) => {
@@ -24,11 +31,34 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
         firstname: '',
         lastname: '',
         email: '',
+        password: '',
         role: 'ADMIN' as 'SUPER_ADMIN' | 'ADMIN',
         cityIds: [] as number[]
     });
 
     const [selectedProfilePicture, setSelectedProfilePicture] = useState<File | null>(null);
+    const [cities, setCities] = useState<City[]>([]);
+    const [loadingCities, setLoadingCities] = useState(false);
+
+    // Load cities when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            loadCities();
+        }
+    }, [isOpen]);
+
+    const loadCities = async () => {
+        try {
+            setLoadingCities(true);
+            const response = await citiesAPI.getAll();
+            setCities(response as City[]);
+        } catch (error) {
+            console.error('Error loading cities:', error);
+            setCities([]);
+        } finally {
+            setLoadingCities(false);
+        }
+    };
 
     const handleProfilePictureSelect = (file: File | null) => {
         setSelectedProfilePicture(file);
@@ -39,6 +69,7 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
             firstname: formData.firstname,
             lastname: formData.lastname,
             email: formData.email,
+            password: formData.password,
             role: formData.role,
             cityIds: formData.cityIds,
             profilePicture: selectedProfilePicture
@@ -52,6 +83,7 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
                 firstname: '',
                 lastname: '',
                 email: '',
+                password: '',
                 role: 'ADMIN',
                 cityIds: []
             });
@@ -59,7 +91,7 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
         }
     };
 
-    const isFormValid = formData.firstname && formData.lastname && formData.email && 
+    const isFormValid = formData.firstname && formData.lastname && formData.email && formData.password && 
         (formData.role === 'SUPER_ADMIN' || (formData.role === 'ADMIN' && formData.cityIds.length > 0));
 
     if (!isOpen) return null;
@@ -106,6 +138,16 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
                         disabled={isLoading}
                     />
 
+                    {/* Password */}
+                    <TextInput
+                        type="password"
+                        placeholder="Mot de passe"
+                        value={formData.password}
+                        onChange={(value) => setFormData(prev => ({ ...prev, password: value }))}
+                        required
+                        disabled={isLoading}
+                    />
+
                     {/* Role Selection */}
                     <div>
                         <p className="mb-3 text-sm text-gray-600">Sélectionnez un rôle</p>
@@ -142,27 +184,19 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
                     {/* Cities Selection - Only show for ADMIN role */}
                     {formData.role === 'ADMIN' && (
                         <MultiSelectDropdown
-                            options={[
-                                { value: 1, label: 'Paris' },
-                                { value: 2, label: 'New York' },
-                                { value: 3, label: 'Tokyo' },
-                                { value: 4, label: 'Londres' },
-                                { value: 5, label: 'Madrid' },
-                                { value: 6, label: 'Berlin' },
-                                { value: 7, label: 'Rome' },
-                                { value: 8, label: 'Barcelona' },
-                                { value: 9, label: 'Amsterdam' },
-                                { value: 10, label: 'Sydney' }
-                            ]}
+                            options={cities.map(city => ({
+                                value: city.id,
+                                label: city.nom
+                            }))}
                             selectedValues={formData.cityIds}
                             onChange={(values) => setFormData(prev => ({ 
                                 ...prev, 
                                 cityIds: values as number[] 
                             }))}
-                            placeholder="Sélectionnez des villes"
+                            placeholder={loadingCities ? "Chargement des villes..." : "Sélectionnez des villes"}
                             searchPlaceholder="Rechercher une ville..."
                             label="Villes à administrer"
-                            disabled={isLoading}
+                            disabled={isLoading || loadingCities}
                             required={formData.role === 'ADMIN'}
                         />
                     )}

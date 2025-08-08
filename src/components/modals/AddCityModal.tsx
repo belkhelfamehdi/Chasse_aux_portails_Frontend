@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Modal from './Modal';
-import { TextInput, TextArea } from '../inputs';
+import { TextInput } from '../inputs';
 import Loading from '../Loading';
 
 interface AddCityModalProps {
@@ -21,11 +21,9 @@ interface CityFormData {
 const AddCityModal: React.FC<AddCityModalProps> = ({ isOpen, onClose, onSubmit, isLoading = false }) => {
     const [formData, setFormData] = useState({
         nom: '',
-        description: '',
         latitude: '',
         longitude: '',
         rayon: '',
-        email: '',
         adminId: undefined as number | undefined
     });
 
@@ -44,11 +42,9 @@ const AddCityModal: React.FC<AddCityModalProps> = ({ isOpen, onClose, onSubmit, 
         if (!isLoading) {
             setFormData({
                 nom: '',
-                description: '',
                 latitude: '',
                 longitude: '',
                 rayon: '',
-                email: '',
                 adminId: undefined
             });
         }
@@ -72,15 +68,6 @@ const AddCityModal: React.FC<AddCityModalProps> = ({ isOpen, onClose, onSubmit, 
                         value={formData.nom}
                         onChange={(value) => setFormData(prev => ({ ...prev, nom: value }))}
                         required
-                        disabled={isLoading}
-                    />
-
-                    {/* Description */}
-                    <TextArea
-                        placeholder="Entrez une description"
-                        value={formData.description}
-                        onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
-                        rows={3}
                         disabled={isLoading}
                     />
 
@@ -111,15 +98,6 @@ const AddCityModal: React.FC<AddCityModalProps> = ({ isOpen, onClose, onSubmit, 
                         value={formData.rayon}
                         onChange={(value) => setFormData(prev => ({ ...prev, rayon: value }))}
                         required
-                        disabled={isLoading}
-                    />
-
-                    {/* Email */}
-                    <TextInput
-                        type="email"
-                        placeholder="Email"
-                        value={formData.email}
-                        onChange={(value) => setFormData(prev => ({ ...prev, email: value }))}
                         disabled={isLoading}
                     />
 

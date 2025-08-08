@@ -44,52 +44,15 @@ const CitiesContent: React.FC = () => {
     loadCities();
   }, []);
 
-  const loadCities = async () => {
+    const loadCities = async () => {
     try {
       setIsLoading(true);
       const response = await citiesAPI.getAll();
       setCities(response as City[]);
     } catch (error) {
       console.error('Error loading cities:', error);
-      // Use mock data as fallback
-      const mockCities: City[] = [
-        {
-          id: 1,
-          nom: 'San Francisco',
-          latitude: 37.7749,
-          longitude: -122.4194,
-          rayon: 10
-        },
-        {
-          id: 2,
-          nom: 'New York',
-          latitude: 40.7128,
-          longitude: -74.0060,
-          rayon: 15
-        },
-        {
-          id: 3,
-          nom: 'London',
-          latitude: 51.5074,
-          longitude: -0.1278,
-          rayon: 20
-        },
-        {
-          id: 4,
-          nom: 'Tokyo',
-          latitude: 35.6895,
-          longitude: 139.6917,
-          rayon: 25
-        },
-        {
-          id: 5,
-          nom: 'Paris',
-          latitude: 48.8566,
-          longitude: 2.3522,
-          rayon: 12
-        },
-      ];
-      setCities(mockCities);
+      // Initialize empty array on error - user will see "no cities found" message
+      setCities([]);
     } finally {
       setIsLoading(false);
     }
@@ -98,18 +61,13 @@ const CitiesContent: React.FC = () => {
   const handleAddCity = async (cityData: CityFormData) => {
     try {
       setIsSubmitting(true);
-      const response = await citiesAPI.create(cityData);
-      setCities([...cities, response as City]);
+      await citiesAPI.create(cityData);
+      await loadCities(); // Reload the list to get fresh data
       setIsAddModalOpen(false);
     } catch (error) {
       console.error('Error adding city:', error);
-      // Fallback to local state update
-      const newCity: City = {
-        ...cityData,
-        id: Math.max(...cities.map(c => c.id)) + 1,
-      };
-      setCities([...cities, newCity]);
-      setIsAddModalOpen(false);
+      // Show error message to user instead of fallback data
+      alert('Erreur lors de l\'ajout de la ville. Veuillez réessayer.');
     } finally {
       setIsSubmitting(false);
     }
@@ -120,11 +78,10 @@ const CitiesContent: React.FC = () => {
       try {
         setIsDeleting(cityId);
         await citiesAPI.delete(cityId);
-        setCities(cities.filter(city => city.id !== cityId));
+        await loadCities(); // Reload the list to get fresh data
       } catch (error) {
         console.error('Error deleting city:', error);
-        // Fallback to local state update
-        setCities(cities.filter(city => city.id !== cityId));
+        alert('Erreur lors de la suppression de la ville. Veuillez réessayer.');
       } finally {
         setIsDeleting(null);
       }

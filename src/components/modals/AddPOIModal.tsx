@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ProfilePictureUpload from '../inputs/ProfilePictureUpload';
 import FileUpload from '../inputs/FileUpload';
 import { TextInput, TextArea, Dropdown } from '../inputs';
 import Modal from './Modal';
 import Loading from '../Loading';
+import { citiesAPI } from '../../services/api';
 
 interface AddPOIModalProps {
     isOpen: boolean;
@@ -17,9 +18,16 @@ interface POIFormData {
     description: string;
     latitude: number;
     longitude: number;
-    iconUrl: string;
-    modelUrl: string;
+    iconUrl?: string;
+    modelUrl?: string;
+    iconFile?: File | null;
+    modelFile?: File | null;
     cityId: number;
+}
+
+interface City {
+    id: number;
+    nom: string;
 }
 
 const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, isLoading = false }) => {
@@ -34,6 +42,28 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, is
     });
     const [selectedIcon, setSelectedIcon] = useState<File | null>(null);
     const [selectedModel, setSelectedModel] = useState<File | null>(null);
+    const [cities, setCities] = useState<City[]>([]);
+    const [loadingCities, setLoadingCities] = useState(false);
+
+    // Load cities when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            loadCities();
+        }
+    }, [isOpen]);
+
+    const loadCities = async () => {
+        try {
+            setLoadingCities(true);
+            const response = await citiesAPI.getAll();
+            setCities(response as City[]);
+        } catch (error) {
+            console.error('Error loading cities:', error);
+            setCities([]);
+        } finally {
+            setLoadingCities(false);
+        }
+    };
 
     const handleSubmit = async () => {
         const poiData: POIFormData = {
@@ -41,9 +71,11 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, is
             description: formData.description,
             latitude: parseFloat(formData.latitude),
             longitude: parseFloat(formData.longitude),
-            iconUrl: selectedIcon ? URL.createObjectURL(selectedIcon) : formData.iconUrl,
-            modelUrl: selectedModel ? URL.createObjectURL(selectedModel) : formData.modelUrl,
-            cityId: formData.cityId
+            cityId: formData.cityId,
+            iconFile: selectedIcon,
+            modelFile: selectedModel,
+            ...(formData.iconUrl?.trim() && { iconUrl: formData.iconUrl }),
+            ...(formData.modelUrl?.trim() && { modelUrl: formData.modelUrl })
         };
 
         await onSubmit(poiData);
@@ -152,29 +184,21 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, is
                     {/* City Selection */}
                     <Dropdown
                         options={[
-                            { value: '', label: 'Sélectionnez une ville' },
-                            { value: '1', label: 'Paris' },
-                            { value: '2', label: 'New York' },
-                            { value: '3', label: 'Tokyo' },
-                            { value: '4', label: 'Londres' },
-                            { value: '5', label: 'Madrid' },
-                            { value: '6', label: 'Berlin' },
-                            { value: '7', label: 'Rome' },
-                            { value: '8', label: 'Barcelona' },
-                            { value: '9', label: 'Amsterdam' },
-                            { value: '10', label: 'Sydney' }
+                            { value: '', label: loadingCities ? 'Chargement des villes...' : 'Sélectionnez une ville' },
+                            ...cities.map(city => ({
+                                value: city.id.toString(),
+                                label: city.nom
+                            }))
                         ]}
                         value={formData.cityId.toString()}
-                        onChange={(value) => setFormData(prev => ({ 
-                            ...prev, 
+                        onChange={(value) => setFormData(prev => ({
+                            ...prev,
                             cityId: parseInt(value) || 0
                         }))}
-                        placeholder="Sélectionnez une ville"
+                        placeholder={loadingCities ? "Chargement des villes..." : "Sélectionnez une ville"}
                         label="Ville"
                         required
-                    />
-
-                    {/* File Upload Section */}
+                    />                    {/* File Upload Section */}
                     <FileUpload
                         onFileSelect={handleModelSelect}
                         acceptedFormats={['GLB', 'OBJ', 'FBX']}

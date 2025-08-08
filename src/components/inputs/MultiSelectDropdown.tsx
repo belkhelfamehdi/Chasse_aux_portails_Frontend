@@ -107,17 +107,41 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                 </label>
             )}
 
+            {/* Selected options display area */}
+            {selectedOptions.length > 0 && (
+                <div className="mb-2 p-2 border rounded-lg bg-gray-50 min-h-[40px] flex flex-wrap gap-1">
+                    {selectedOptions.map((option) => (
+                        <span
+                            key={option.value}
+                            className="inline-flex items-center px-2 py-1 text-xs bg-white border rounded-lg text-secondary whitespace-nowrap"
+                        >
+                            {option.label}
+                            <button
+                                type="button"
+                                className="flex items-center justify-center w-4 h-4 ml-1 text-gray-400 rounded-full hover:text-red-500 focus:outline-none hover:bg-red-50"
+                                onClick={(e) => handleRemoveOption(option.value, e)}
+                                disabled={disabled}
+                                aria-label={`Remove ${option.label}`}
+                            >
+                                ×
+                            </button>
+                        </span>
+                    ))}
+                </div>
+            )}
+
+            {/* Dropdown trigger button */}
             <button
                 type="button"
-                className={`flex items-start justify-between w-full px-3 py-3 text-left text-sm border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary transition-colors ${disabled
+                className={`flex items-center justify-between w-full px-3 py-3 text-left text-sm border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary transition-colors ${disabled
                         ? 'opacity-50 cursor-not-allowed bg-gray-50'
                         : 'bg-white hover:border-gray-400'
-                    } ${selectedOptions.length > 3 ? 'items-start' : 'items-center'}`}
+                    }`}
                 style={{
                     borderColor: '#e5e7eb',
                     backgroundColor: disabled ? '#f9fafb' : 'white',
                     color: selectedOptions.length > 0 ? '#1f2937' : '#9ca3af',
-                    minHeight: selectedOptions.length > 3 ? '80px' : '44px'
+                    minHeight: '44px'
                 }}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 onKeyDown={handleKeyDown}
@@ -125,35 +149,17 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                 aria-expanded={isOpen}
                 disabled={disabled}
             >
-                <div className="flex flex-wrap items-center gap-1 flex-1 min-h-[20px] max-h-24 overflow-y-auto">
-                    {selectedOptions.length === 0 && (
-                        <span className="text-gray-400">{placeholder}</span>
-                    )}
-                    {selectedOptions.length > 0 && (
-                        <>
-                            {selectedOptions.map((option) => (
-                                <span
-                                    key={option.value}
-                                    className="inline-flex items-center px-2 py-1 text-xs rounded-lg text-secondary bg-secondary-bg whitespace-nowrap"
-                                >
-                                    {option.label}
-                                    <button
-                                        type="button"
-                                        className="ml-1 hover:text-secondary focus:outline-none"
-                                        onClick={(e) => handleRemoveOption(option.value, e)}
-                                        disabled={disabled}
-                                        aria-label={`Remove ${option.label}`}
-                                    >
-                                        ×
-                                    </button>
-                                </span>
-                            ))}
-                        </>
-                    )}
-                </div>
+                <span className="text-gray-500">
+                    {(() => {
+                        if (selectedOptions.length > 0) {
+                            const itemText = selectedOptions.length === 1 ? 'item' : 'items';
+                            return `${selectedOptions.length} ${itemText} selected`;
+                        }
+                        return placeholder;
+                    })()}
+                </span>
                 <svg
-                    className={`w-4 h-4 transition-transform ml-2 flex-shrink-0 ${isOpen ? 'rotate-180' : ''
-                        }`}
+                    className={`w-4 h-4 transition-transform ml-2 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
