@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useState, useContext, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { authAPI, type User } from '../services/api';
 
@@ -13,15 +13,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
-};
+const AuthContext = createContext<AuthContextType | null>(null);
 
 interface AuthProviderProps {
     children: ReactNode;
@@ -38,8 +30,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Load saved authentication data on startup
     useEffect(() => {
-        const savedToken = localStorage.getItem('accessToken');
-        const savedUser = localStorage.getItem('user');
+        const savedToken = localStorage.getItem('accessToken') ?? sessionStorage.getItem('accessToken');
+        const savedUser = localStorage.getItem('user') ?? sessionStorage.getItem('user');
 
         if (savedToken && savedUser) {
             try {
@@ -50,12 +42,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 console.error('Error parsing saved user data:', error);
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('user');
+                sessionStorage.removeItem('accessToken');
+                sessionStorage.removeItem('user');
             }
         }
         setIsLoading(false);
     }, []);
 
-    const login = async (email: string, password: string): Promise<void> => {
+    const login = async (email: string, password: string, rememberMe?: boolean): Promise<void> => {
         setIsLoginLoading(true);
         try {
             const response = await authAPI.login(email, password);
@@ -63,32 +57,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setUser(response.user);
             setToken(response.accessToken);
 
-            // Always save to localStorage for now
-            localStorage.setItem('accessToken', response.accessToken);
-            localStorage.setItem('user', JSON.stringify(response.user));
+            const storage = rememberMe ? localStorage : sessionStorage;
+            storage.setItem('accessToken', response.accessToken);
+            storage.setItem('user', JSON.stringify(response.user));
         } finally {
             setIsLoginLoading(false);
         }
     };
 
     const logout = async (): Promise<void> => {
+        setIsLogoutLoading(true);
         try {
-            setIsLogoutLoading(true);
-            // Try to call logout endpoint to clear cookies
-            try {
-                await authAPI.logout();
-            } catch {
-                // Ignore logout API errors - just clear local state
-                console.warn('Logout API call failed, clearing local state anyway');
-            }
+            await authAPI.logout();
         } catch (error) {
             console.error('Logout error:', error);
         } finally {
-            // Clear local state regardless of API call success
             setUser(null);
             setToken(null);
             localStorage.removeItem('accessToken');
             localStorage.removeItem('user');
+            sessionStorage.removeItem('accessToken');
+            sessionStorage.removeItem('user');
             setIsLogoutLoading(false);
         }
     };
@@ -110,3 +99,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         </AuthContext.Provider>
     );
 };
+
+export const useAuth = (): AuthContextType => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+};
+
+export { AuthContext };
+
