@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import { adminsAPI } from '../../services/api';
+import { adminsAPI, type AdminData } from '../../services/api';
 import AddAdminModal from '../modals/AddAdminModal';
+import EditAdminModal from '../modals/EditAdminModal';
 import Button from '../Button';
 import Loading from '../Loading';
 
@@ -12,6 +13,7 @@ interface Admin {
   email: string;
   role: 'SUPER_ADMIN' | 'ADMIN';
   cities?: City[];
+  profilePictureUrl?: string;
 }
 
 interface City {
@@ -32,6 +34,8 @@ interface AdminFormData {
 export default function AdminsContent() {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
@@ -86,21 +90,36 @@ export default function AdminsContent() {
     }
   };
 
+  const openEditAdmin = (admin: Admin) => {
+    setEditingAdmin(admin);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditAdmin = async (data: Partial<AdminData>) => {
+    if (!editingAdmin) return;
+    try {
+      setIsSubmitting(true);
+      await adminsAPI.update(parseInt(editingAdmin.id), data);
+      await loadAdmins();
+      setIsEditModalOpen(false);
+      setEditingAdmin(null);
+    } catch (error) {
+      console.error('Error updating admin:', error);
+      alert('Erreur lors de la mise à jour de l\'administrateur. Veuillez réessayer.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const getFullName = (firstname: string, lastname: string) => {
     return `${firstname} ${lastname}`;
   };
 
-  const getProfileIcon = (name: string) => {
-    // Simple icon mapping for demo - matching the UI design icons
-    const iconMap: { [key: string]: string } = {
-      'Grand Plaza Fountain': '🏛️',
-      'Apex Tower': '🏢',
-      'Bright Square': '📍',
-      'National Museum of Art': '🏛️',
-      'Liberty Bridge': '🌉'
-    };
-
-    return iconMap[name] || '👤';
+  const getInitials = (firstname: string, lastname: string, email: string) => {
+    const a = firstname?.[0]?.toUpperCase();
+    const b = lastname?.[0]?.toUpperCase();
+    if (a || b) return `${a || ''}${b || ''}` || undefined;
+    return email?.[0]?.toUpperCase() || 'U';
   };
 
   const filteredAdmins = admins.filter(admin => {
@@ -178,11 +197,21 @@ export default function AdminsContent() {
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-3">
                       <div className="flex-shrink-0">
-                        <div className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full">
-                          <span className="text-lg">
-                            {getProfileIcon(getFullName(admin.firstname, admin.lastname))}
-                          </span>
-                        </div>
+                        {admin.profilePictureUrl ? (
+                          <img
+                            src={admin.profilePictureUrl}
+                            alt={`Avatar de ${getFullName(admin.firstname, admin.lastname)}`}
+                            className="object-cover w-10 h-10 rounded-full"
+                            loading="lazy"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full">
+                            <span className="text-sm font-medium text-gray-600">
+                              {getInitials(admin.firstname, admin.lastname, admin.email)}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <div>
                         <div className="text-sm font-medium text-gray-900">
@@ -199,6 +228,7 @@ export default function AdminsContent() {
                       <button
                         title="Modifier"
                         className="text-link font-semibold transition-colors hover:text-blue-800"
+                        onClick={() => openEditAdmin(admin)}
                       >
                         <span className="text-sm">Edit</span>
                       </button>
@@ -229,6 +259,15 @@ export default function AdminsContent() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSubmit={handleAddAdmin}
+        isLoading={isSubmitting}
+      />
+
+      {/* Edit Admin Modal */}
+      <EditAdminModal
+        isOpen={isEditModalOpen}
+        onClose={() => { setIsEditModalOpen(false); setEditingAdmin(null); }}
+        initialAdmin={editingAdmin}
+        onSubmit={handleEditAdmin}
         isLoading={isSubmitting}
       />
     </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { poisAPI } from '../../services/api';
 import AddPOIModal from '../modals/AddPOIModal';
+import EditPOIModal from '../modals/EditPOIModal';
 import Button from '../Button';
 import Loading from '../Loading';
 
@@ -35,6 +36,8 @@ interface POIFormData {
 export default function POIsContent() {
   const [pois, setPois] = useState<POI[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingPOI, setEditingPOI] = useState<POI | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
@@ -86,6 +89,27 @@ export default function POIsContent() {
       } finally {
         setIsDeleting(null);
       }
+    }
+  };
+
+  const openEdit = (poi: POI) => {
+    setEditingPOI(poi);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditPOI = async (data: Partial<POIFormData>) => {
+    if (!editingPOI) return;
+    try {
+      setIsSubmitting(true);
+      await poisAPI.update(editingPOI.id, data);
+      await loadPOIs();
+      setIsEditModalOpen(false);
+      setEditingPOI(null);
+    } catch (error) {
+      console.error('Error updating POI:', error);
+      alert('Erreur lors de la mise à jour du POI.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -209,6 +233,7 @@ export default function POIsContent() {
                     <div className="flex items-center justify-end space-x-2">
                       <button
                         title="Modifier"
+                        onClick={() => openEdit(poi)}
                         className="text-link transition-colors hover:text-blue-800"
                       >
                         <span className="text-sm">Edit</span>
@@ -240,6 +265,15 @@ export default function POIsContent() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSubmit={handleAddPOI}
+        isLoading={isSubmitting}
+      />
+
+      {/* Edit POI Modal */}
+      <EditPOIModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        initialPOI={editingPOI}
+        onSubmit={handleEditPOI}
         isLoading={isSubmitting}
       />
     </div>

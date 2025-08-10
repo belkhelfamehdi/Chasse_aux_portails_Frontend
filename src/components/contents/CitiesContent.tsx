@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { citiesAPI } from '../../services/api';
+import { citiesAPI, type CityData } from '../../services/api';
 import Button from '../Button';
 import AddCityModal from '../modals/AddCityModal';
+import EditCityModal from '../modals/EditCityModal';
 import Loading from '../Loading';
 
 interface POI {
@@ -24,17 +25,13 @@ interface City {
   pois?: POI[];
 }
 
-interface CityFormData {
-  nom: string;
-  latitude: number;
-  longitude: number;
-  rayon: number;
-  adminId?: number;
-}
+type CityFormData = CityData;
 
 const CitiesContent: React.FC = () => {
   const [cities, setCities] = useState<City[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingCity, setEditingCity] = useState<City | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,7 +58,7 @@ const CitiesContent: React.FC = () => {
   const handleAddCity = async (cityData: CityFormData) => {
     try {
       setIsSubmitting(true);
-      await citiesAPI.create(cityData);
+  await citiesAPI.create(cityData);
       await loadCities(); // Reload the list to get fresh data
       setIsAddModalOpen(false);
     } catch (error) {
@@ -85,6 +82,27 @@ const CitiesContent: React.FC = () => {
       } finally {
         setIsDeleting(null);
       }
+    }
+  };
+
+  const openEdit = (city: City) => {
+    setEditingCity(city);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditCity = async (data: Partial<CityData>) => {
+    if (!editingCity) return;
+    try {
+      setIsSubmitting(true);
+      await citiesAPI.update(editingCity.id, data);
+      await loadCities();
+      setIsEditModalOpen(false);
+      setEditingCity(null);
+    } catch (error) {
+      console.error('Error updating city:', error);
+      alert('Erreur lors de la mise à jour de la ville.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -155,6 +173,7 @@ const CitiesContent: React.FC = () => {
                     <div className="flex items-center justify-end space-x-2">
                       <button
                         title="Modifier"
+                        onClick={() => openEdit(city)}
                         className="text-link font-semibold transition-colors hover:text-blue-800"
                       >
                         <span className="text-sm">Edit</span>
@@ -186,6 +205,15 @@ const CitiesContent: React.FC = () => {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSubmit={handleAddCity}
+        isLoading={isSubmitting}
+      />
+
+      {/* Edit City Modal */}
+      <EditCityModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        initialCity={editingCity}
+        onSubmit={handleEditCity}
         isLoading={isSubmitting}
       />
     </div>
