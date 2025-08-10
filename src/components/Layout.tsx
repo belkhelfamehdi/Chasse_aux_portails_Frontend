@@ -1,16 +1,11 @@
-import React, { type ReactNode } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React from 'react';
+import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { HomeIcon, MapIcon, MapPinIcon, UsersIcon, Cog6ToothIcon } from '@heroicons/react/24/solid';
 import { ArrowRightStartOnRectangleIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 import Logo from '../assets/logo.png';
 
-interface LayoutProps {
-    children: ReactNode;
-    title: string;
-}
-
-const Layout: React.FC<LayoutProps> = ({ children, title }) => {
+const Layout: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, logout } = useAuth();
@@ -42,6 +37,26 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
         }
         
         return breadcrumbItems.join(' > ');
+    };
+
+    // Compute title from current route
+    const getPageTitle = () => {
+        const route = navigationItems.find(item => item.path === location.pathname);
+        if (!route) return 'Chasse aux portails';
+        switch (route.path) {
+            case '/dashboard':
+                return 'Chasse aux portails';
+            case '/cities':
+                return 'Gestion des Villes';
+            case '/pois':
+                return 'Gestion des POIs';
+            case '/admins':
+                return 'Gestion des Admins';
+            case '/settings':
+                return 'Paramètres';
+            default:
+                return route.label;
+        }
     };
 
     // Filter navigation items based on user role
@@ -143,7 +158,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
                 <header className="px-6 py-4 bg-white shadow-sm">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-xl font-semibold text-gray-800">{title}</h1>
+                            <h1 className="text-xl font-semibold text-gray-800">{getPageTitle()}</h1>
                             <p className="text-sm font-light text-primary">{generateBreadcrumb()}</p>
                         </div>
                         <div className="flex items-center space-x-4">
@@ -164,7 +179,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
 
                 {/* Content Area */}
                 <main className="flex-1 p-6">
-                    {children}
+                    <Outlet />
                 </main>
             </div>
         </div>
