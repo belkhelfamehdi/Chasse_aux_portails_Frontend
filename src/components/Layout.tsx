@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { HomeIcon, MapIcon, MapPinIcon, UsersIcon, Cog6ToothIcon } from '@heroicons/react/24/solid';
 import { ArrowRightStartOnRectangleIcon } from '@heroicons/react/24/outline';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/useAuth';
 import Logo from '../assets/logo.png';
 
 const Layout: React.FC = () => {
@@ -167,11 +167,20 @@ const Layout: React.FC = () => {
                                     <p className="text-sm font-medium text-gray-800">{getUserDisplayName()}</p>
                                     <p className="text-xs text-primary">{getRoleDisplayName()}</p>
                                 </div>
-                                <div className="flex items-center justify-center w-10 h-10 bg-gray-300 rounded-full">
-                                    <span className="text-sm font-medium text-gray-600">
-                                        {user?.firstname?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
-                                    </span>
-                                </div>
+                                {user?.profilePictureUrl ? (
+                                    <img
+                                        src={user.profilePictureUrl}
+                                        alt="Avatar"
+                                        className="object-cover w-10 h-10 rounded-full"
+                                        referrerPolicy="no-referrer"
+                                    />
+                                ) : (
+                                    <div className="flex items-center justify-center w-10 h-10 bg-gray-300 rounded-full">
+                                        <span className="text-sm font-medium text-gray-600">
+                                            {user?.firstname?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

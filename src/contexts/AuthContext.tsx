@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, useMemo } from 'react';
+import React, { createContext, useState, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { authAPI, type User } from '../services/api';
 
@@ -65,6 +65,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
     };
 
+    // Keep token/user in sync if a background refresh happens via api.ts helper
+    useEffect(() => {
+        // Listen to cross-tab storage changes
+        const onStorage = (e: StorageEvent) => {
+            if (e.key === 'accessToken') {
+                setToken(e.newValue);
+            }
+            if (e.key === 'user' && e.newValue) {
+                try {
+                    setUser(JSON.parse(e.newValue));
+                } catch {
+                    // Ignore parse errors
+                }
+            }
+        };
+        // Listen to in-app auth update events fired by api.ts after refresh
+        const onAuthUpdated = (e: Event) => {
+            const custom = e as CustomEvent<{ accessToken?: string; user?: User }>;
+            if (custom.detail?.accessToken) setToken(custom.detail.accessToken);
+            if (custom.detail?.user) setUser(custom.detail.user);
+        };
+        window.addEventListener('storage', onStorage);
+        window.addEventListener('auth:updated', onAuthUpdated as EventListener);
+        return () => {
+            window.removeEventListener('storage', onStorage);
+            window.removeEventListener('auth:updated', onAuthUpdated as EventListener);
+        };
+    }, []);
+
     const logout = async (): Promise<void> => {
         setIsLogoutLoading(true);
         try {
@@ -98,14 +127,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             {children}
         </AuthContext.Provider>
     );
-};
-
-export const useAuth = (): AuthContextType => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
 };
 
 export { AuthContext };

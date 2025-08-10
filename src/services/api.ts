@@ -8,6 +8,7 @@ export interface User {
     role: 'SUPER_ADMIN' | 'ADMIN';
     firstname?: string;
     lastname?: string;
+    profilePictureUrl?: string;
 }
 
 export interface LoginResponse {
@@ -85,10 +86,21 @@ async function apiRequest<T>(
                 
                 if (refreshResponse.ok) {
                     const refreshData = await refreshResponse.json();
-                    const newToken = refreshData.accessToken;
+                    const newToken: string = refreshData.accessToken;
+                    const refreshedUser: User | undefined = refreshData.user;
                     
                     // Update localStorage
                     localStorage.setItem('accessToken', newToken);
+                    if (refreshedUser) {
+                        localStorage.setItem('user', JSON.stringify(refreshedUser));
+                    }
+
+                    // Notify app about auth update
+                    try {
+                        window.dispatchEvent(new CustomEvent('auth:updated', { detail: { accessToken: newToken, user: refreshedUser } }));
+                    } catch {
+                        // Ignore dispatch errors
+                    }
                     
                     // Retry the original request with new token
                     response = await makeRequest(newToken);
@@ -175,8 +187,8 @@ export const authAPI = {
         });
     },
 
-    refreshToken: async (): Promise<{ accessToken: string }> => {
-        return apiRequest<{ accessToken: string }>('/auth/refresh', {
+    refreshToken: async (): Promise<{ accessToken: string; user?: User }> => {
+        return apiRequest<{ accessToken: string; user?: User }>('/auth/refresh', {
             method: 'POST',
         });
     },
@@ -374,3 +386,4 @@ export const adminsAPI = {
         });
     },
 };
+
