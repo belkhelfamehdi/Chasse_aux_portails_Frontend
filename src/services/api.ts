@@ -1,7 +1,22 @@
-// API Configuration
+/**
+ * API client utilities and typed endpoints for the frontend.
+ * - Centralizes token handling (read/write, refresh, and propagation).
+ * - Provides JSON and multipart helpers.
+ * - Includes JSDoc to generate documentation.
+ */
+
+// Base configuration
+/**
+ * Base URL for the backend API.
+ * Reads from VITE_API_URL and falls back to http://localhost:3000/api
+ */
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
+// =========================
 // Types
+// =========================
+
+/** Authenticated user shape returned by the backend. */
 export interface User {
     id: number;
     email: string;
@@ -11,15 +26,18 @@ export interface User {
     profilePictureUrl?: string;
 }
 
+/** Response body returned by /auth/login (and refresh). */
 export interface LoginResponse {
     accessToken: string;
     user: User;
 }
 
+/** Generic error payload returned by the backend. */
 export interface ApiError {
     error: string;
 }
 
+/** City payload used in create/update operations. */
 export interface CityData {
     nom: string;
     latitude: number;
@@ -28,6 +46,10 @@ export interface CityData {
     adminId?: number;
 }
 
+/**
+ * Point Of Interest payload for create/update operations.
+ * Note: Backend currently accepts JSON only for iconUrl/modelUrl (no multipart for POIs).
+ */
 export interface POIData {
     nom: string;
     description: string;
@@ -35,11 +57,12 @@ export interface POIData {
     longitude: number;
     iconUrl?: string;
     modelUrl?: string;
-    iconFile?: File | null;
-    modelFile?: File | null;
+    iconFile?: File | null; // not used by backend currently
+    modelFile?: File | null; // not used by backend currently
     cityId: number;
 }
 
+/** Admin payload for create/update operations. */
 export interface AdminData {
     firstname: string;
     lastname: string;
@@ -50,340 +73,322 @@ export interface AdminData {
     profilePicture?: File | null;
 }
 
-// Generic API request function
-async function apiRequest<T>(
-    endpoint: string,
-    options: RequestInit = {}
-): Promise<T> {
+// =========================
+// Internal helpers
+// =========================
+
+/** Returns the access token from localStorage or sessionStorage. */
+function getStoredToken(): string | null {
+    return localStorage.getItem('accessToken') ?? sessionStorage.getItem('accessToken');
+}
+
+/** Writes the access token and optional user to both storages and dispatches an auth event. */
+function setStoredAuth(accessToken: string, user?: User) {
+    localStorage.setItem('accessToken', accessToken);
+    sessionStorage.setItem('accessToken', accessToken);
+    if (user) {
+        const userStr = JSON.stringify(user);
+        localStorage.setItem('user', userStr);
+        sessionStorage.setItem('user', userStr);
+    }
+    try {
+        window.dispatchEvent(new CustomEvent('auth:updated', { detail: { accessToken, user } }));
+    } catch {
+        // ignore
+    }
+}
+
+/** Clears auth data and redirects to login. */
+function clearAuthAndRedirect() {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
+    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem('user');
+    window.location.href = '/login';
+}
+
+/** Returns true when the response indicates an auth failure that might be recoverable. */
+function isAuthError(res: Response) {
+    return res.status === 401 || res.status === 403;
+}
+
+/** Try to parse an error body as JSON; fall back to text. */
+async function parseErrorMessage(res: Response): Promise<string> {
+    try {
+        const data = await res.clone().json();
+        if (data && typeof data === 'object') {
+            const apiError = data as Partial<ApiError>;
+            return apiError.error || `HTTP error ${res.status}`;
+        }
+    } catch {
+        // ignore and fall back to text
+    }
+    try {
+        const text = await res.text();
+        return text || `HTTP error ${res.status}`;
+    } catch {
+        return `HTTP error ${res.status}`;
+    }
+}
+
+/** Throw a descriptive Error for a non-OK response. */
+async function throwFromResponse(res: Response): Promise<never> {
+    throw new Error(await parseErrorMessage(res));
+}
+
+/** Performs a refresh token flow; returns true if a new token is stored. */
+async function refreshAccessToken(): Promise<boolean> {
+    const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+    });
+    if (!res.ok) return false;
+    const data = (await res.json()) as { accessToken: string; user?: User };
+    if (!data?.accessToken) return false;
+    setStoredAuth(data.accessToken, data.user);
+    return true;
+}
+
+/**
+ * Execute a request with the current token and retry once after refresh on 401/403.
+ * Keeps complexity low by centralizing the refresh logic.
+ */
+async function withAuthFetch(getRequest: (token: string | null) => Promise<Response>): Promise<Response> {
+    const token = getStoredToken();
+    let response = await getRequest(token);
+    if (isAuthError(response) && token) {
+        const refreshed = await refreshAccessToken();
+        if (!refreshed) {
+            clearAuthAndRedirect();
+            throw new Error('Session expired. Please login again.');
+        }
+        const newToken = getStoredToken();
+        response = await getRequest(newToken);
+    }
+    return response;
+}
+
+// =========================
+// Public HTTP helpers
+// =========================
+
+/**
+ * Generic JSON API request helper.
+ * - Attaches Authorization header if an access token is present.
+ * - On 401/403, auto-attempts a refresh then retries once.
+ *
+ * @template T Expected JSON response type
+ * @param endpoint API endpoint, e.g. "/cities"
+ * @param options fetch options (method, body, headers, ...)
+ */
+async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
-    
-    // Get token from localStorage
-    const token = localStorage.getItem('accessToken');
-    
-    const makeRequest = async (accessToken: string | null): Promise<Response> => {
+    const getRequest = (accessToken: string | null) => {
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            ...(options.headers as Record<string, string>),
+        };
+        if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
         const config: RequestInit = {
             credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-                ...options.headers,
-            },
             ...options,
+            headers,
         };
         return fetch(url, config);
     };
 
-    try {
-        let response = await makeRequest(token);
-        
-        // If token is expired (403 or 401), try to refresh
-        if ((response.status === 403 || response.status === 401) && token) {
-            try {
-                const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
-                    method: 'POST',
-                    credentials: 'include',
-                });
-                
-                if (refreshResponse.ok) {
-                    const refreshData = await refreshResponse.json();
-                    const newToken: string = refreshData.accessToken;
-                    const refreshedUser: User | undefined = refreshData.user;
-                    
-                    // Update localStorage
-                    localStorage.setItem('accessToken', newToken);
-                    if (refreshedUser) {
-                        localStorage.setItem('user', JSON.stringify(refreshedUser));
-                    }
-
-                    // Notify app about auth update
-                    try {
-                        window.dispatchEvent(new CustomEvent('auth:updated', { detail: { accessToken: newToken, user: refreshedUser } }));
-                    } catch {
-                        // Ignore dispatch errors
-                    }
-                    
-                    // Retry the original request with new token
-                    response = await makeRequest(newToken);
-                } else {
-                    // Refresh failed, clear auth data and redirect to login
-                    localStorage.removeItem('accessToken');
-                    localStorage.removeItem('user');
-                    window.location.href = '/login';
-                    throw new Error('Session expired. Please login again.');
-                }
-            } catch {
-                // Refresh failed, clear auth data
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('user');
-                window.location.href = '/login';
-                throw new Error('Session expired. Please login again.');
-            }
-        }
-        
-        if (!response.ok) {
-            const errorData: ApiError = await response.json();
-            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-        }
-        
-        return await response.json();
-    } catch (error) {
-        if (error instanceof Error) {
-            throw error;
-        }
-        throw new Error('Une erreur réseau est survenue');
-    }
+    const response = await withAuthFetch(getRequest);
+    if (!response.ok) await throwFromResponse(response);
+    return response.json() as Promise<T>;
 }
 
-// API request function for FormData (file uploads)
+/**
+ * API request helper for multipart/form-data uploads.
+ * Automatically adds Authorization header when available.
+ *
+ * @template T Expected JSON response type
+ * @param endpoint API endpoint, e.g. "/admins"
+ * @param formData FormData payload to send
+ * @param method HTTP method, defaults to POST
+ */
 async function apiFormDataRequest<T>(
     endpoint: string,
     formData: FormData,
     method: 'POST' | 'PUT' = 'POST'
 ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
-    
-    // Get token from localStorage
-    const token = localStorage.getItem('accessToken');
-    
-    const config: RequestInit = {
-        method,
-        credentials: 'include',
-        headers: {
-            ...(token && { Authorization: `Bearer ${token}` }),
-            // Don't set Content-Type for FormData - browser will set it automatically with boundary
-        },
-        body: formData,
+    const getRequest = (accessToken: string | null) => {
+        const headers: Record<string, string> = {};
+        if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+        const config: RequestInit = {
+            method,
+            credentials: 'include',
+            headers,
+            body: formData,
+        };
+        return fetch(url, config);
     };
 
-    try {
-        const response = await fetch(url, config);
-        
-        if (!response.ok) {
-            const errorData: ApiError = await response.json();
-            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-        }
-        
-        return await response.json();
-    } catch (error) {
-        if (error instanceof Error) {
-            throw error;
-        }
-        throw new Error('Une erreur réseau est survenue');
-    }
+    const response = await withAuthFetch(getRequest);
+    if (!response.ok) await throwFromResponse(response);
+    return response.json() as Promise<T>;
 }
 
-// Auth API
+// =========================
+// API groups
+// =========================
+
+/** Auth endpoints */
 export const authAPI = {
-    login: async (email: string, password: string): Promise<LoginResponse> => {
-        return apiRequest<LoginResponse>('/auth/login', {
+    /** Login with email/password. */
+    login: (email: string, password: string): Promise<LoginResponse> =>
+        apiRequest<LoginResponse>('/auth/login', {
             method: 'POST',
             body: JSON.stringify({ email, password }),
-        });
-    },
+        }),
 
-    logout: async (): Promise<{ message: string }> => {
-        return apiRequest<{ message: string }>('/auth/logout', {
-            method: 'POST',
-        });
-    },
+    /** Logout current session. */
+    logout: (): Promise<{ message: string }> =>
+        apiRequest<{ message: string }>('/auth/logout', { method: 'POST' }),
 
-    refreshToken: async (): Promise<{ accessToken: string; user?: User }> => {
-        return apiRequest<{ accessToken: string; user?: User }>('/auth/refresh', {
-            method: 'POST',
-        });
-    },
+    /** Request a new access token using the refresh cookie. */
+    refreshToken: (): Promise<{ accessToken: string; user?: User }> =>
+        apiRequest<{ accessToken: string; user?: User }>('/auth/refresh', { method: 'POST' }),
 };
 
-// Cities API
+/** Cities endpoints */
 export const citiesAPI = {
-    getAll: async () => {
-        return apiRequest('/cities');
-    },
+    /** Get all cities. */
+    getAll: () => apiRequest('/cities'),
 
-    create: async (cityData: CityData) => {
-        return apiRequest('/cities/create', {
-            method: 'POST',
-            body: JSON.stringify(cityData),
-        });
-    },
+    /** Create a city. */
+    create: (cityData: CityData) =>
+        apiRequest('/cities/create', { method: 'POST', body: JSON.stringify(cityData) }),
 
-    update: async (id: number, cityData: Partial<CityData>) => {
-        return apiRequest(`/cities/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify(cityData),
-        });
-    },
+    /** Update a city by id. */
+    update: (id: number, cityData: Partial<CityData>) =>
+        apiRequest(`/cities/${id}`, { method: 'PUT', body: JSON.stringify(cityData) }),
 
-    delete: async (id: number) => {
-        return apiRequest(`/cities/${id}`, {
-            method: 'DELETE',
-        });
-    },
+    /** Delete a city by id. */
+    delete: (id: number) => apiRequest(`/cities/${id}`, { method: 'DELETE' }),
 };
 
-// POIs API
+/** Points Of Interest endpoints */
 export const poisAPI = {
-    getAll: async () => {
-        return apiRequest('/pois');
-    },
+    /** Get all POIs. */
+    getAll: () => apiRequest('/pois'),
 
-    create: async (poiData: POIData) => {
-        // If there are files to upload, use FormData
-        if (poiData.iconFile || poiData.modelFile) {
-            const formData = new FormData();
-            formData.append('nom', poiData.nom);
-            formData.append('description', poiData.description);
-            formData.append('latitude', poiData.latitude.toString());
-            formData.append('longitude', poiData.longitude.toString());
-            formData.append('cityId', poiData.cityId.toString());
-            
-            if (poiData.iconFile) {
-                formData.append('iconFile', poiData.iconFile);
-            }
-            if (poiData.modelFile) {
-                formData.append('modelFile', poiData.modelFile);
-            }
-            
-            return apiFormDataRequest('/pois/create', formData);
-        } else {
-            // For POIs without files, use JSON
-            const poiDataWithoutFiles = {
-                nom: poiData.nom,
-                description: poiData.description,
-                latitude: poiData.latitude,
-                longitude: poiData.longitude,
-                cityId: poiData.cityId,
-                ...(poiData.iconUrl?.trim() && { iconUrl: poiData.iconUrl }),
-                ...(poiData.modelUrl?.trim() && { modelUrl: poiData.modelUrl })
-            };
-            return apiRequest('/pois/create', {
-                method: 'POST',
-                body: JSON.stringify(poiDataWithoutFiles),
-            });
-        }
-    },
-
-    update: async (id: number, poiData: Partial<POIData>) => {
-        // If there are files to upload, use FormData
-        if (poiData.iconFile || poiData.modelFile) {
-            const formData = new FormData();
-            if (poiData.nom) formData.append('nom', poiData.nom);
-            if (poiData.description) formData.append('description', poiData.description);
-            if (poiData.latitude !== undefined) formData.append('latitude', poiData.latitude.toString());
-            if (poiData.longitude !== undefined) formData.append('longitude', poiData.longitude.toString());
-            if (poiData.cityId) formData.append('cityId', poiData.cityId.toString());
-            
-            if (poiData.iconFile) {
-                formData.append('iconFile', poiData.iconFile);
-            }
-            if (poiData.modelFile) {
-                formData.append('modelFile', poiData.modelFile);
-            }
-            
-            return apiFormDataRequest(`/pois/${id}`, formData, 'PUT');
-        } else {
-            // For updates without files, use JSON
-            const poiDataWithoutFiles = {
-                ...(poiData.nom && { nom: poiData.nom }),
-                ...(poiData.description && { description: poiData.description }),
-                ...(poiData.latitude !== undefined && { latitude: poiData.latitude }),
-                ...(poiData.longitude !== undefined && { longitude: poiData.longitude }),
-                ...(poiData.cityId && { cityId: poiData.cityId }),
-                ...(poiData.iconUrl && { iconUrl: poiData.iconUrl }),
-                ...(poiData.modelUrl && { modelUrl: poiData.modelUrl })
-            };
-            return apiRequest(`/pois/${id}`, {
-                method: 'PUT',
-                body: JSON.stringify(poiDataWithoutFiles),
-            });
-        }
-    },
-
-    delete: async (id: number) => {
-        return apiRequest(`/pois/${id}`, {
-            method: 'DELETE',
+    /** Create a POI (JSON only; backend currently does not accept multipart for POIs). */
+    create: (poiData: POIData) => {
+        const payload = filterUndefined({
+            nom: poiData.nom,
+            description: poiData.description,
+            latitude: poiData.latitude,
+            longitude: poiData.longitude,
+            cityId: poiData.cityId,
+            iconUrl: trimOrUndefined(poiData.iconUrl),
+            modelUrl: trimOrUndefined(poiData.modelUrl),
         });
+        return apiRequest('/pois/create', { method: 'POST', body: JSON.stringify(payload) });
     },
+
+    /** Update a POI by id (JSON only). */
+    update: (id: number, poiData: Partial<POIData>) => {
+        const payload = filterUndefined({
+            nom: poiData.nom,
+            description: poiData.description,
+            latitude: poiData.latitude,
+            longitude: poiData.longitude,
+            cityId: poiData.cityId,
+            iconUrl: poiData.iconUrl,
+            modelUrl: poiData.modelUrl,
+        });
+        return apiRequest(`/pois/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    },
+
+    /** Delete a POI by id. */
+    delete: (id: number) => apiRequest(`/pois/${id}`, { method: 'DELETE' }),
 };
 
-// Admins API
+/** Admins endpoints */
 export const adminsAPI = {
-    getAll: async () => {
-        return apiRequest('/admins');
-    },
+    /** Get all admins (SUPER_ADMIN only). */
+    getAll: () => apiRequest('/admins'),
 
-    getById: async (id: number) => {
-        return apiRequest(`/admins/${id}`);
-    },
+    /** Get an admin by id. */
+    getById: (id: number) => apiRequest(`/admins/${id}`),
 
-    getStats: async () => {
-        return apiRequest('/admins/stats');
-    },
+    /** Get admin stats (counts, etc.). */
+    getStats: () => apiRequest('/admins/stats'),
 
-    create: async (adminData: AdminData) => {
-        // If there's a profile picture, use FormData
+    /** Create an admin. Uses multipart when a profile picture is provided; otherwise JSON. */
+    create: (adminData: AdminData) => {
         if (adminData.profilePicture) {
-            const formData = new FormData();
-            formData.append('firstname', adminData.firstname);
-            formData.append('lastname', adminData.lastname);
-            formData.append('email', adminData.email);
-            formData.append('password', adminData.password);
-            formData.append('role', adminData.role);
-            formData.append('cityIds', JSON.stringify(adminData.cityIds));
-            formData.append('profilePicture', adminData.profilePicture);
-            
-            return apiFormDataRequest('/admins', formData);
-        } else {
-            // For admins without profile pictures, use JSON
-            const adminDataWithoutFile = {
-                firstname: adminData.firstname,
-                lastname: adminData.lastname,
-                email: adminData.email,
-                password: adminData.password,
-                role: adminData.role,
-                cityIds: adminData.cityIds
-            };
-            return apiRequest('/admins', {
-                method: 'POST',
-                body: JSON.stringify(adminDataWithoutFile),
-            });
+            return apiFormDataRequest('/admins', buildAdminFormData(adminData));
         }
-    },
-
-    update: async (id: number, adminData: Partial<AdminData>) => {
-        // If there's a profile picture, use FormData
-        if (adminData.profilePicture) {
-            const formData = new FormData();
-            if (adminData.firstname) formData.append('firstname', adminData.firstname);
-            if (adminData.lastname) formData.append('lastname', adminData.lastname);
-            if (adminData.email) formData.append('email', adminData.email);
-            if (adminData.password) formData.append('password', adminData.password);
-            if (adminData.role) formData.append('role', adminData.role);
-            if (adminData.cityIds) formData.append('cityIds', JSON.stringify(adminData.cityIds));
-            formData.append('profilePicture', adminData.profilePicture);
-            
-            return apiFormDataRequest(`/admins/${id}`, formData, 'PUT');
-        } else {
-            // For updates without profile pictures, use JSON
-            const adminDataWithoutFile: Partial<AdminData> = {};
-            if (adminData.firstname) adminDataWithoutFile.firstname = adminData.firstname;
-            if (adminData.lastname) adminDataWithoutFile.lastname = adminData.lastname;
-            if (adminData.email) adminDataWithoutFile.email = adminData.email;
-            if (adminData.password) adminDataWithoutFile.password = adminData.password;
-            if (adminData.role) adminDataWithoutFile.role = adminData.role;
-            if (adminData.cityIds) adminDataWithoutFile.cityIds = adminData.cityIds;
-            
-            return apiRequest(`/admins/${id}`, {
-                method: 'PUT',
-                body: JSON.stringify(adminDataWithoutFile),
-            });
-        }
-    },
-
-    delete: async (id: number) => {
-        return apiRequest(`/admins/${id}`, {
-            method: 'DELETE',
+        return apiRequest('/admins', {
+            method: 'POST',
+            body: JSON.stringify(buildAdminJson(adminData)),
         });
     },
+
+    /** Update an admin by id. Uses multipart when a profile picture is provided; otherwise JSON. */
+    update: (id: number, adminData: Partial<AdminData>) => {
+        if (adminData.profilePicture) {
+            return apiFormDataRequest(`/admins/${id}`, buildAdminFormData(adminData), 'PUT');
+        }
+        return apiRequest(`/admins/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(buildAdminJson(adminData)),
+        });
+    },
+
+    /** Delete an admin by id. */
+    delete: (id: number) => apiRequest(`/admins/${id}`, { method: 'DELETE' }),
 };
+
+// =========================
+// Small utility builders
+// =========================
+
+/** Build multipart payload for admin create/update. */
+function buildAdminFormData(adminData: Partial<AdminData>): FormData {
+    const form = new FormData();
+    if (adminData.firstname) form.append('firstname', adminData.firstname);
+    if (adminData.lastname) form.append('lastname', adminData.lastname);
+    if (adminData.email) form.append('email', adminData.email);
+    if (adminData.password) form.append('password', adminData.password);
+    if (adminData.role) form.append('role', adminData.role);
+    if (adminData.cityIds) form.append('cityIds', JSON.stringify(adminData.cityIds));
+    if (adminData.profilePicture) form.append('profilePicture', adminData.profilePicture);
+    return form;
+}
+
+/** Build minimal JSON payload for admin create/update by stripping undefined. */
+function buildAdminJson(adminData: Partial<AdminData>): Partial<AdminData> {
+    return filterUndefined<Partial<AdminData>>({
+        firstname: adminData.firstname,
+        lastname: adminData.lastname,
+        email: adminData.email,
+        password: adminData.password,
+        role: adminData.role,
+        cityIds: adminData.cityIds,
+    });
+}
+
+/** Returns undefined for empty strings, otherwise a trimmed string. */
+function trimOrUndefined(value?: string): string | undefined {
+    if (value == null) return undefined;
+    const t = value.trim();
+    return t.length ? t : undefined;
+}
+
+/** Removes keys whose values are undefined or null. */
+function filterUndefined<T extends Record<string, unknown>>(obj: T): T {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj)) {
+        if (v !== undefined && v !== null) out[k] = v;
+    }
+    return out as T;
+}
 
