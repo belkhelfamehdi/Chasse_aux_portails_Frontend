@@ -174,7 +174,7 @@ const CitiesContent: React.FC = () => {
                       <button
                         title="Modifier"
                         onClick={() => openEdit(city)}
-                        className="text-link font-semibold transition-colors hover:text-blue-800"
+                        className="text-link font-semibold transition-colors cursor-pointer"
                       >
                         <span className="text-sm">Edit</span>
                       </button>
@@ -183,7 +183,7 @@ const CitiesContent: React.FC = () => {
                         title="Supprimer"
                         onClick={() => handleDeleteCity(city.id)}
                         disabled={isDeleting === city.id}
-                        className="text-link font-semibold transition-colors hover:text-red-800 disabled:opacity-50"
+                        className="text-link font-semibold transition-colors cursor-pointer disabled:opacity-50"
                       >
                         {isDeleting === city.id ? (
                           <Loading size="sm" />
