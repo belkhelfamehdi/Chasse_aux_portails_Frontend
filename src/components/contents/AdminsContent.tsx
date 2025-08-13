@@ -3,6 +3,7 @@ import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { adminsAPI, type AdminData } from '../../services/api';
 import AddAdminModal from '../modals/AddAdminModal';
 import EditAdminModal from '../modals/EditAdminModal';
+import ConfirmDeleteModal from '../modals/ConfirmDeleteModal';
 import Button from '../Button';
 import Loading from '../Loading';
 
@@ -40,6 +41,10 @@ export default function AdminsContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Delete confirmation modal states
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [adminToDelete, setAdminToDelete] = useState<Admin | null>(null);
 
   // Load admins on component mount
   useEffect(() => {
@@ -75,19 +80,33 @@ export default function AdminsContent() {
     }
   };
 
-  const handleDeleteAdmin = async (adminId: string) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet administrateur ?')) {
-      try {
-        setIsDeleting(adminId);
-        await adminsAPI.delete(parseInt(adminId));
-        await loadAdmins(); // Reload the list to get fresh data
-      } catch (error) {
-        console.error('Error deleting admin:', error);
-        alert('Erreur lors de la suppression de l\'administrateur. Veuillez réessayer.');
-      } finally {
-        setIsDeleting(null);
-      }
+  const handleDeleteAdmin = async (admin: Admin) => {
+    setAdminToDelete(admin);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteAdmin = async () => {
+    if (!adminToDelete) return;
+
+    try {
+      setIsDeleting(adminToDelete.id);
+      await adminsAPI.delete(parseInt(adminToDelete.id));
+      await loadAdmins(); // Reload the list to get fresh data
+      
+      // Close modal and reset
+      setIsDeleteModalOpen(false);
+      setAdminToDelete(null);
+    } catch (error) {
+      console.error('Error deleting admin:', error);
+      alert('Erreur lors de la suppression de l\'administrateur. Veuillez réessayer.');
+    } finally {
+      setIsDeleting(null);
     }
+  };
+
+  const cancelDeleteAdmin = () => {
+    setIsDeleteModalOpen(false);
+    setAdminToDelete(null);
   };
 
   const openEditAdmin = (admin: Admin) => {
@@ -235,7 +254,7 @@ export default function AdminsContent() {
                       <span className="text-gray-300">|</span>
                       <button
                         title="Supprimer"
-                        onClick={() => handleDeleteAdmin(admin.id)}
+                        onClick={() => handleDeleteAdmin(admin)}
                         disabled={isDeleting === admin.id}
                         className="text-link font-semibold transition-colors disabled:opacity-50 cursor-pointer"
                       >
@@ -269,6 +288,17 @@ export default function AdminsContent() {
         initialAdmin={editingAdmin}
         onSubmit={handleEditAdmin}
         isLoading={isSubmitting}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={cancelDeleteAdmin}
+        onConfirm={confirmDeleteAdmin}
+        title="Supprimer l'administrateur"
+        message={`Êtes-vous sûr de vouloir supprimer l'administrateur ${adminToDelete ? (adminToDelete.firstname + ' ' + adminToDelete.lastname) : ''} ? Cette action est irréversible.`}
+        itemName={adminToDelete ? `${adminToDelete.firstname} ${adminToDelete.lastname}` : ''}
+        isDeleting={isDeleting === adminToDelete?.id}
       />
     </div>
   );

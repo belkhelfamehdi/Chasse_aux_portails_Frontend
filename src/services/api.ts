@@ -199,7 +199,20 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 
     const response = await withAuthFetch(getRequest);
     if (!response.ok) await throwFromResponse(response);
-    return response.json() as Promise<T>;
+    
+    // Pour les réponses 204 (No Content), ne pas essayer de parser en JSON
+    if (response.status === 204) {
+        return {} as T;
+    }
+    
+    // Vérifier s'il y a un contenu à parser
+    const contentType = response.headers.get('content-type');
+    if (contentType?.includes('application/json')) {
+        return response.json() as Promise<T>;
+    }
+    
+    // Si pas de contenu JSON, retourner un objet vide
+    return {} as T;
 }
 
 /**
@@ -261,6 +274,9 @@ export const citiesAPI = {
     /** Get all cities. */
     getAll: () => apiRequest('/cities'),
 
+    /** Get a city by id. */
+    getById: (id: number) => apiRequest(`/cities/${id}`),
+
     /** Create a city. */
     create: (cityData: CityData) =>
         apiRequest('/cities/create', { method: 'POST', body: JSON.stringify(cityData) }),
@@ -277,6 +293,9 @@ export const citiesAPI = {
 export const poisAPI = {
     /** Get all POIs. */
     getAll: () => apiRequest('/pois'),
+
+    /** Get POIs by city id. */
+    getByCity: (cityId: number) => apiRequest(`/pois/city/${cityId}`),
 
     /** Create a POI (JSON only; backend currently does not accept multipart for POIs). */
     create: (poiData: POIData) => {

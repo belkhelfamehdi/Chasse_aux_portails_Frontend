@@ -7,6 +7,7 @@ import CitiesContent from './components/contents/CitiesContent';
 import POIsContent from './components/contents/POIsContent';
 import AdminsContent from './components/contents/AdminsContent';
 import Layout from './components/Layout';
+import CityDetailsPage from './pages/CityDetails/CityDetailsPage';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           >
             <Route path="/dashboard" element={<DashboardContent />} />
             <Route path="/cities" element={<CitiesContent />} />
+            <Route path="/cities/:id" element={<CityDetailsPage />} />
             <Route path="/pois" element={<POIsContent />} />
             <Route
               path="/admins"

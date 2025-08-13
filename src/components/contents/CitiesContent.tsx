@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { citiesAPI, type CityData } from '../../services/api';
 import Button from '../Button';
 import AddCityModal from '../modals/AddCityModal';
 import EditCityModal from '../modals/EditCityModal';
+import ConfirmDeleteModal from '../modals/ConfirmDeleteModal';
 import Loading from '../Loading';
 
 interface POI {
@@ -28,6 +30,7 @@ interface City {
 type CityFormData = CityData;
 
 const CitiesContent: React.FC = () => {
+  const navigate = useNavigate();
   const [cities, setCities] = useState<City[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -35,6 +38,8 @@ const CitiesContent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [cityToDelete, setCityToDelete] = useState<City | null>(null);
 
   // Load cities on component mount
   useEffect(() => {
@@ -70,19 +75,33 @@ const CitiesContent: React.FC = () => {
     }
   };
 
-  const handleDeleteCity = async (cityId: number) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette ville ?')) {
-      try {
-        setIsDeleting(cityId);
-        await citiesAPI.delete(cityId);
-        await loadCities(); // Reload the list to get fresh data
-      } catch (error) {
-        console.error('Error deleting city:', error);
-        alert('Erreur lors de la suppression de la ville. Veuillez réessayer.');
-      } finally {
-        setIsDeleting(null);
-      }
+  const handleDeleteCity = async (city: City) => {
+    setCityToDelete(city);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteCity = async () => {
+    if (!cityToDelete) return;
+
+    try {
+      setIsDeleting(cityToDelete.id);
+      await citiesAPI.delete(cityToDelete.id);
+      await loadCities(); // Reload the list to get fresh data
+      
+      // Close modal and reset
+      setIsDeleteModalOpen(false);
+      setCityToDelete(null);
+    } catch (error) {
+      console.error('Error deleting city:', error);
+      alert('Erreur lors de la suppression de la ville. Veuillez réessayer.');
+    } finally {
+      setIsDeleting(null);
     }
+  };
+
+  const cancelDeleteCity = () => {
+    setIsDeleteModalOpen(false);
+    setCityToDelete(null);
   };
 
   const openEdit = (city: City) => {
@@ -161,7 +180,13 @@ const CitiesContent: React.FC = () => {
               cities.map((city) => (
                 <tr key={city.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                    {city.nom}
+                    <button
+                      onClick={() => navigate(`/cities/${city.id}`)}
+                      className="text-blue-600 hover:text-blue-800 underline font-medium cursor-pointer"
+                      title={`Voir les détails de ${city.nom}`}
+                    >
+                      {city.nom}
+                    </button>
                   </td>
                   <td className="px-6 py-4 text-sm text-primary">
                     {formatCoordinates(city.latitude, city.longitude)}
@@ -181,7 +206,7 @@ const CitiesContent: React.FC = () => {
                       <span className="text-gray-300 font-semibold">|</span>
                       <button
                         title="Supprimer"
-                        onClick={() => handleDeleteCity(city.id)}
+                        onClick={() => handleDeleteCity(city)}
                         disabled={isDeleting === city.id}
                         className="text-link font-semibold transition-colors cursor-pointer disabled:opacity-50"
                       >
@@ -215,6 +240,17 @@ const CitiesContent: React.FC = () => {
         initialCity={editingCity}
         onSubmit={handleEditCity}
         isLoading={isSubmitting}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={cancelDeleteCity}
+        onConfirm={confirmDeleteCity}
+        title="Supprimer la ville"
+        message="Êtes-vous sûr de vouloir supprimer cette ville ?"
+        itemName={cityToDelete?.nom}
+        isDeleting={isDeleting === cityToDelete?.id}
       />
     </div>
   );

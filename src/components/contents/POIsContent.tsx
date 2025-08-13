@@ -3,6 +3,8 @@ import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { poisAPI } from '../../services/api';
 import AddPOIModal from '../modals/AddPOIModal';
 import EditPOIModal from '../modals/EditPOIModal';
+import Model3DViewerModal from '../modals/Model3DViewerModal';
+import ConfirmDeleteModal from '../modals/ConfirmDeleteModal';
 import Button from '../Button';
 import Loading from '../Loading';
 
@@ -42,6 +44,12 @@ export default function POIsContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [is3DViewerOpen, setIs3DViewerOpen] = useState(false);
+  const [viewing3DPOI, setViewing3DPOI] = useState<POI | null>(null);
+
+  // Delete confirmation modal states
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [poiToDelete, setPoiToDelete] = useState<POI | null>(null);
 
   // Load POIs on component mount
   useEffect(() => {
@@ -77,19 +85,40 @@ export default function POIsContent() {
     }
   };
 
-  const handleDeletePOI = async (poiId: number) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce POI ?')) {
-      try {
-        setIsDeleting(poiId);
-        await poisAPI.delete(poiId);
-        await loadPOIs(); // Reload the list to get fresh data
-      } catch (error) {
-        console.error('Error deleting POI:', error);
-        alert('Erreur lors de la suppression du POI. Veuillez réessayer.');
-      } finally {
-        setIsDeleting(null);
-      }
+  const handleDeletePOI = async (poi: POI) => {
+    setPoiToDelete(poi);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeletePOI = async () => {
+    if (!poiToDelete) return;
+
+    try {
+      console.log(`🗑️ Suppression du POI avec ID: ${poiToDelete.id}`);
+      setIsDeleting(poiToDelete.id);
+      await poisAPI.delete(poiToDelete.id);
+      console.log(`✅ POI ${poiToDelete.id} supprimé avec succès`);
+      await loadPOIs(); // Reload the list to get fresh data
+      
+      // Close modal and reset
+      setIsDeleteModalOpen(false);
+      setPoiToDelete(null);
+    } catch (error) {
+      console.error('❌ Erreur lors de la suppression du POI:', error);
+      console.error('❌ Détails de l\'erreur:', {
+        message: (error as Error).message,
+        stack: (error as Error).stack,
+        poiId: poiToDelete.id
+      });
+      alert('Erreur lors de la suppression du POI. Veuillez réessayer.');
+    } finally {
+      setIsDeleting(null);
     }
+  };
+
+  const cancelDeletePOI = () => {
+    setIsDeleteModalOpen(false);
+    setPoiToDelete(null);
   };
 
   const openEdit = (poi: POI) => {
@@ -113,30 +142,51 @@ export default function POIsContent() {
     }
   };
 
+  const open3DViewer = (poi: POI) => {
+    setViewing3DPOI(poi);
+    setIs3DViewerOpen(true);
+  };
+
+  const close3DViewer = () => {
+    setIs3DViewerOpen(false);
+    setViewing3DPOI(null);
+  };
+
   const filteredPOIs = pois.filter(poi => {
     const matchesSearch = poi.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
       poi.description.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
 
-  const formatCoordinates = (latitude: number, longitude: number) => {
-    return `${latitude.toFixed(4)}° N, ${Math.abs(longitude).toFixed(4)}° ${longitude >= 0 ? 'E' : 'W'}`;
-  };
-
   const getIconDisplay = (iconUrl?: string) => {
-    if (!iconUrl) return '📍'; // Default icon if no URL provided
+    if (!iconUrl || iconUrl.trim() === '') {
+      // Icône par défaut si pas d'URL fournie
+      return (
+        <div className="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-lg">
+          <span className="text-lg">📍</span>
+        </div>
+      );
+    }
     
-    // Simple icon mapping for demo - matching the UI design icons
-    const iconMap: { [key: string]: string } = {
-      'fountain-icon.png': '⛲',
-      'tower-icon.png': '🏢',
-      'park-icon.png': '🌳',
-      'museum-icon.png': '🏛️',
-      'bridge-icon.png': '🌉'
-    };
-
-    const fileName = iconUrl.split('/').pop() || '';
-    return iconMap[fileName] || '📍';
+    // Afficher la vraie image comme pour les photos de profil des admins
+    return (
+      <img
+        src={iconUrl}
+        alt="POI Icon"
+        className="object-cover w-8 h-8 rounded-lg"
+        loading="lazy"
+        referrerPolicy="no-referrer"
+        onError={(e) => {
+          // En cas d'erreur, afficher l'icône par défaut
+          const target = e.target as HTMLImageElement;
+          target.style.display = 'none';
+          const parent = target.parentElement;
+          if (parent) {
+            parent.innerHTML = '<div class="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-lg"><span class="text-lg">📍</span></div>';
+          }
+        }}
+      />
+    );
   };
 
   if (isLoading) {
@@ -184,16 +234,22 @@ export default function POIsContent() {
           <thead className="border-b border-gray-200 bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-sm font-medium text-left text-gray-500">
-                Name
+                Nom
               </th>
               <th className="px-6 py-3 text-sm font-medium text-left text-gray-500">
                 Description
               </th>
               <th className="px-6 py-3 text-sm font-medium text-left text-gray-500">
-                Coordinates
+                Ville
               </th>
               <th className="px-6 py-3 text-sm font-medium text-left text-gray-500">
-                Icon/Model
+                Coordonnées
+              </th>
+              <th className="px-6 py-3 text-sm font-medium text-center text-gray-500">
+                Icône
+              </th>
+              <th className="px-6 py-3 text-sm font-medium text-center text-gray-500">
+                Modèle 3D
               </th>
               <th className="px-6 py-3 text-sm font-medium text-right text-gray-500">
                 Actions
@@ -203,7 +259,7 @@ export default function POIsContent() {
           <tbody className="divide-y divide-gray-200">
             {filteredPOIs.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
                   Aucun POI trouvé.
                 </td>
               </tr>
@@ -213,21 +269,41 @@ export default function POIsContent() {
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">
                     {poi.nom}
                   </td>
-                  <td className="px-6 py-4 text-sm text-primary">
+                  <td className="px-6 py-4 text-sm text-gray-600">
                     {poi.description}
                   </td>
-                  <td className="px-6 py-4 text-sm text-primary">
-                    {formatCoordinates(poi.latitude, poi.longitude)}
+                  <td className="px-6 py-4 text-sm text-primary font-medium">
+                    {poi.city?.nom || `Ville ID: ${poi.cityId}`}
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-lg">{getIconDisplay(poi.iconUrl)}</span>
-                      {poi.modelUrl && (
-                        <div className="flex items-center justify-center w-8 h-8 bg-gray-100 border rounded">
-                          <div className="w-4 h-4 bg-gray-400 rounded"></div>
-                        </div>
-                      )}
+                  <td className="px-6 py-4 text-sm text-gray-600">
+                    <div className="space-y-1">
+                      <div>Lat: {poi.latitude.toFixed(6)}°</div>
+                      <div>Lng: {poi.longitude.toFixed(6)}°</div>
                     </div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="flex flex-col items-center space-y-2">
+                      {getIconDisplay(poi.iconUrl)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    {poi.modelUrl && poi.modelUrl.length > 0 ? (
+                      <div className="flex flex-col items-center space-y-1">
+                        <button
+                          onClick={() => open3DViewer(poi)}
+                          className="flex items-center justify-center w-10 h-10 bg-blue-100 border border-blue-200 rounded-lg hover:bg-blue-200 transition-colors cursor-pointer"
+                          title="Voir le modèle 3D"
+                        >
+                          <div className="w-5 h-5 bg-blue-500 rounded transform rotate-12"></div>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center space-y-1">
+                        <div className="flex items-center justify-center w-10 h-10 bg-gray-100 border border-gray-200 rounded-lg">
+                          <span className="text-xs text-gray-400">N/A</span>
+                        </div>
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end space-x-2">
@@ -241,7 +317,7 @@ export default function POIsContent() {
                       <span className="text-gray-300">|</span>
                       <button
                         title="Supprimer"
-                        onClick={() => handleDeletePOI(poi.id)}
+                        onClick={() => handleDeletePOI(poi)}
                         disabled={isDeleting === poi.id}
                         className="text-link transition-colors cursor-pointer disabled:opacity-50"
                       >
@@ -275,6 +351,25 @@ export default function POIsContent() {
         initialPOI={editingPOI}
         onSubmit={handleEditPOI}
         isLoading={isSubmitting}
+      />
+
+      {/* 3D Model Viewer Modal */}
+      <Model3DViewerModal
+        isOpen={is3DViewerOpen}
+        onClose={close3DViewer}
+        modelUrl={viewing3DPOI?.modelUrl || ''}
+        modelName={viewing3DPOI?.nom || 'Modèle 3D'}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={cancelDeletePOI}
+        onConfirm={confirmDeletePOI}
+        title="Supprimer le POI"
+        message={`Êtes-vous sûr de vouloir supprimer le POI "${poiToDelete?.nom || ''}" ? Cette action est irréversible.`}
+        itemName={poiToDelete?.nom || ''}
+        isDeleting={isDeleting === poiToDelete?.id}
       />
     </div>
   );
