@@ -4,6 +4,7 @@ import Button from '../Button';
 import AddPOIModal, { type POIFormData } from '../modals/AddPOIModal';
 import EditPOIModal from '../modals/EditPOIModal';
 import ConfirmDeleteModal from '../modals/ConfirmDeleteModal';
+import Model3DViewerModal from '../modals/Model3DViewerModal';
 import { citiesAPI, poisAPI } from '../../services/api';
 
 interface City {
@@ -43,6 +44,10 @@ const CityDetailsContent: React.FC<CityDetailsContentProps> = ({ cityId }) => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [poiToDelete, setPOIToDelete] = useState<POI | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    
+    // 3D Viewer modal states
+    const [is3DViewerOpen, setIs3DViewerOpen] = useState(false);
+    const [viewing3DPOI, setViewing3DPOI] = useState<POI | null>(null);
 
     const loadCityData = useCallback(async () => {
         if (!cityId) {
@@ -169,6 +174,16 @@ const CityDetailsContent: React.FC<CityDetailsContentProps> = ({ cityId }) => {
         setPOIToDelete(null);
     };
 
+    const open3DViewer = (poi: POI) => {
+        setViewing3DPOI(poi);
+        setIs3DViewerOpen(true);
+    };
+
+    const close3DViewer = () => {
+        setIs3DViewerOpen(false);
+        setViewing3DPOI(null);
+    };
+
     if (loading) {
         return (
             <div className="p-6">
@@ -259,21 +274,22 @@ const CityDetailsContent: React.FC<CityDetailsContentProps> = ({ cityId }) => {
                     <div>
                         {/* Table Header */}
                         <div className="grid grid-cols-12 gap-4 px-5 py-3 bg-gray-50 border-b border-gray-300 text-xs font-semibold text-gray-700">
-                            <div className="col-span-3">Name</div>
-                            <div className="col-span-4">Description</div>
+                            <div className="col-span-2">Name</div>
+                            <div className="col-span-3">Description</div>
                             <div className="col-span-2">Coordinates</div>
-                            <div className="col-span-1">Icon/Model</div>
-                            <div className="col-span-2">Actions</div>
+                            <div className="col-span-1">Icon</div>
+                            <div className="col-span-1">3D Model</div>
+                            <div className="col-span-3">Actions</div>
                         </div>
 
                         {/* Table Rows */}
                         {pois.map((poi, index) => (
                             <div key={poi.id} className={`grid grid-cols-12 gap-4 px-5 py-4 items-center ${index < pois.length - 1 ? 'border-b border-gray-100' : ''
                                 } ${index % 2 === 1 ? 'bg-gray-25' : 'bg-white'} hover:bg-gray-50 transition-colors`}>
-                                <div className="col-span-3 text-sm text-gray-800 font-medium">
+                                <div className="col-span-2 text-sm text-gray-800 font-medium">
                                     {poi.nom}
                                 </div>
-                                <div className="col-span-4 text-sm text-cyan-600 leading-relaxed">
+                                <div className="col-span-3 text-sm text-cyan-600 leading-relaxed">
                                     {poi.description}
                                 </div>
                                 <div className="col-span-2 text-xs text-cyan-600 font-mono font-medium">
@@ -282,7 +298,22 @@ const CityDetailsContent: React.FC<CityDetailsContentProps> = ({ cityId }) => {
                                 <div className="col-span-1 text-xl text-center">
                                     {getIconForPOI(poi)}
                                 </div>
-                                <div className="col-span-2">
+                                <div className="col-span-1 text-center">
+                                    {poi.modelUrl && poi.modelUrl.trim().length > 0 && poi.modelUrl !== '' ? (
+                                        <button
+                                            onClick={() => open3DViewer(poi)}
+                                            className="flex items-center justify-center w-8 h-8 bg-blue-100 border border-blue-200 rounded-lg hover:bg-blue-200 transition-colors cursor-pointer"
+                                            title={`Voir le modèle 3D: ${poi.modelUrl}`}
+                                        >
+                                            <div className="w-4 h-4 bg-blue-500 rounded transform rotate-12"></div>
+                                        </button>
+                                    ) : (
+                                        <div className="flex items-center justify-center w-8 h-8 bg-gray-100 border border-gray-200 rounded-lg" title="Pas de modèle 3D disponible">
+                                            <span className="text-xs text-gray-400">N/A</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="col-span-3">
                                     <button 
                                         onClick={() => handleEditPOI(poi)}
                                         className="text-blue-600 text-xs underline mr-1 hover:text-blue-800 transition-colors cursor-pointer bg-transparent border-none"
@@ -334,6 +365,14 @@ const CityDetailsContent: React.FC<CityDetailsContentProps> = ({ cityId }) => {
                 message="Êtes-vous sûr de vouloir supprimer ce point d'intérêt ?"
                 itemName={poiToDelete?.nom}
                 isDeleting={isDeleting}
+            />
+
+            {/* 3D Model Viewer Modal */}
+            <Model3DViewerModal
+                isOpen={is3DViewerOpen}
+                onClose={close3DViewer}
+                modelUrl={viewing3DPOI?.modelUrl || ''}
+                modelName={viewing3DPOI?.nom || 'Modèle 3D'}
             />
         </div>
     );

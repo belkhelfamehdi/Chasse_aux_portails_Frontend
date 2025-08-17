@@ -297,18 +297,46 @@ export const poisAPI = {
     /** Get POIs by city id. */
     getByCity: (cityId: number) => apiRequest(`/pois/city/${cityId}`),
 
-    /** Create a POI (JSON only; backend currently does not accept multipart for POIs). */
+    /** Create a POI with file upload support for icons and 3D models. */
     create: (poiData: POIData) => {
-        const payload = filterUndefined({
-            nom: poiData.nom,
-            description: poiData.description,
-            latitude: poiData.latitude,
-            longitude: poiData.longitude,
-            cityId: poiData.cityId,
-            iconUrl: trimOrUndefined(poiData.iconUrl),
-            modelUrl: trimOrUndefined(poiData.modelUrl),
-        });
-        return apiRequest('/pois/create', { method: 'POST', body: JSON.stringify(payload) });
+        // Check if we have files to upload
+        const hasFiles = poiData.iconFile || poiData.modelFile;
+        
+        if (hasFiles) {
+            // Use multipart form data for file uploads
+            const formData = new FormData();
+            formData.append('nom', poiData.nom);
+            formData.append('description', poiData.description);
+            formData.append('latitude', poiData.latitude.toString());
+            formData.append('longitude', poiData.longitude.toString());
+            formData.append('cityId', poiData.cityId.toString());
+            
+            if (poiData.iconFile) {
+                formData.append('iconFile', poiData.iconFile);
+            } else if (poiData.iconUrl) {
+                formData.append('iconUrl', poiData.iconUrl);
+            }
+            
+            if (poiData.modelFile) {
+                formData.append('modelFile', poiData.modelFile);
+            } else if (poiData.modelUrl) {
+                formData.append('modelUrl', poiData.modelUrl);
+            }
+            
+            return apiFormDataRequest('/pois/create', formData, 'POST');
+        } else {
+            // Use JSON for URL-only POIs
+            const payload = filterUndefined({
+                nom: poiData.nom,
+                description: poiData.description,
+                latitude: poiData.latitude,
+                longitude: poiData.longitude,
+                cityId: poiData.cityId,
+                iconUrl: trimOrUndefined(poiData.iconUrl),
+                modelUrl: trimOrUndefined(poiData.modelUrl),
+            });
+            return apiRequest('/pois/create', { method: 'POST', body: JSON.stringify(payload) });
+        }
     },
 
     /** Update a POI by id (JSON only). */

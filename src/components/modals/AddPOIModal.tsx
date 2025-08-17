@@ -74,8 +74,9 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, is
             cityId: formData.cityId,
             iconFile: selectedIcon,
             modelFile: selectedModel,
-            ...(formData.iconUrl?.trim() && { iconUrl: formData.iconUrl }),
-            ...(formData.modelUrl?.trim() && { modelUrl: formData.modelUrl })
+            // Only include URLs if no files are selected and URLs are provided
+            ...(formData.iconUrl?.trim() && !selectedIcon && { iconUrl: formData.iconUrl }),
+            ...(formData.modelUrl?.trim() && !selectedModel && { modelUrl: formData.modelUrl })
         };
 
         await onSubmit(poiData);
@@ -99,6 +100,7 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, is
     const handleIconSelect = (file: File | null) => {
         if (!isLoading) {
             setSelectedIcon(file);
+            // For display purposes only, create a temporary blob URL
             if (file) {
                 const iconUrl = URL.createObjectURL(file);
                 setFormData(prev => ({ ...prev, iconUrl }));
@@ -111,12 +113,8 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, is
     const handleModelSelect = (file: File | null) => {
         if (!isLoading) {
             setSelectedModel(file);
-            if (file) {
-                const modelUrl = URL.createObjectURL(file);
-                setFormData(prev => ({ ...prev, modelUrl }));
-            } else {
-                setFormData(prev => ({ ...prev, modelUrl: '' }));
-            }
+            // Don't create blob URL for models - just track the file
+            // The backend will handle the upload and provide the real URL
         }
     };
 
@@ -207,6 +205,18 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, is
                         className="mb-4"
                         disabled={isLoading}
                     />
+                    
+                    {/* Show selected model file name */}
+                    {selectedModel && (
+                        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                                <div className="w-4 h-4 bg-blue-500 rounded transform rotate-12"></div>
+                                <span className="text-sm text-blue-700 font-medium">
+                                    Modèle 3D sélectionné: {selectedModel.name}
+                                </span>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Submit Button */}
                     <div className="flex justify-end">

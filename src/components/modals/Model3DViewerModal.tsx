@@ -9,7 +9,7 @@ interface Model3DViewerModalProps {
     modelName: string;
 }
 
-export default function Model3DViewerModal({ isOpen, onClose, modelUrl, modelName }: Model3DViewerModalProps) {
+export default function Model3DViewerModal({ isOpen, onClose, modelUrl, modelName }: Readonly<Model3DViewerModalProps>) {
     const mountRef = useRef<HTMLDivElement>(null);
     const sceneRef = useRef<THREE.Scene | null>(null);
     const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -18,294 +18,184 @@ export default function Model3DViewerModal({ isOpen, onClose, modelUrl, modelNam
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!isOpen || !mountRef.current) return;
+        if (!isOpen || !mountRef.current || !modelUrl?.trim()) return;
 
-        const loadGLTFModel = async (scene: THREE.Scene) => {
-            // Pour GLTF, on aurait besoin du GLTFLoader
-            // Pour l'instant, on charge un modèle de base
-            loadDemoModel(scene);
-        };
+        const loadOBJModel = async (scene: THREE.Scene, url: string) => {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const objText = await response.text();
+            const lines = objText.split('\n');
+            const vertices: THREE.Vector3[] = [];
+            const faces: number[][] = [];
 
-        const loadFBXModel = async (scene: THREE.Scene) => {
-            // Pour FBX, on aurait besoin du FBXLoader
-            // Pour l'instant, on charge un modèle de base
-            loadDemoModel(scene);
-        };
+            for (const line of lines) {
+                const parts = line.trim().split(/\s+/);
+                if (parts[0] === 'v' && parts.length >= 4) {
+                    vertices.push(new THREE.Vector3(
+                        parseFloat(parts[1]),
+                        parseFloat(parts[2]),
+                        parseFloat(parts[3])
+                    ));
+                } else if (parts[0] === 'f' && parts.length >= 4) {
+                    const faceVertices = parts.slice(1).map(v => parseInt(v) - 1);
+                    faces.push(faceVertices);
+                }
+            }
 
-        const loadDemoModel = (scene: THREE.Scene) => {
-            // Créer un modèle de démonstration (cube avec textures)
-            const geometry = new THREE.BoxGeometry(2, 2, 2);
+            if (vertices.length === 0 || faces.length === 0) {
+                throw new Error('Fichier OBJ invalide: aucune géométrie trouvée');
+            }
+            
+            const geometry = new THREE.BufferGeometry();
+            const positions: number[] = [];
+
+            for (const face of faces) {
+                if (face.length === 3) {
+                    for (const vertexIndex of face) {
+                        if (vertices[vertexIndex]) {
+                            const vertex = vertices[vertexIndex];
+                            positions.push(vertex.x, vertex.y, vertex.z);
+                        }
+                    }
+                } else if (face.length === 4) {
+                    const quad = face.map(i => vertices[i]).filter(v => v !== undefined);
+                    if (quad.length === 4) {
+                        // Triangle 1: 0,1,2
+                        positions.push(quad[0].x, quad[0].y, quad[0].z);
+                        positions.push(quad[1].x, quad[1].y, quad[1].z);
+                        positions.push(quad[2].x, quad[2].y, quad[2].z);
+                        // Triangle 2: 0,2,3
+                        positions.push(quad[0].x, quad[0].y, quad[0].z);
+                        positions.push(quad[2].x, quad[2].y, quad[2].z);
+                        positions.push(quad[3].x, quad[3].y, quad[3].z);
+                    }
+                }
+            }
+
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geometry.computeVertexNormals();
+
             const material = new THREE.MeshPhongMaterial({
-                color: 0x00ff00,
-                shininess: 100
+                color: 0x4A90E2,
+                shininess: 100,
+                side: THREE.DoubleSide
             });
-            const cube = new THREE.Mesh(geometry, material);
-            cube.castShadow = true;
-            cube.receiveShadow = true;
-            scene.add(cube);
+
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+
+            // Centrer et redimensionner
+            const box = new THREE.Box3().setFromObject(mesh);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            
+            mesh.position.sub(center);
+            
+            const maxDimension = Math.max(size.x, size.y, size.z);
+            if (maxDimension > 0) {
+                mesh.scale.multiplyScalar(2 / maxDimension);
+            }
+
+            scene.add(mesh);
 
             // Animation de rotation
             let rotation = 0;
-            const animateCube = () => {
+            (mesh as THREE.Mesh & { customAnimation?: () => void }).customAnimation = () => {
                 rotation += 0.01;
-                cube.rotation.x = rotation;
-                cube.rotation.y = rotation;
+                mesh.rotation.y = rotation;
             };
-
-            // Stocker l'animation
-            (cube as THREE.Mesh & { customAnimation?: () => void }).customAnimation = animateCube;
-        };
-
-        const loadOBJModel = async (scene: THREE.Scene, url: string) => {
-            try {
-                console.log('🔄 Tentative de chargement du modèle OBJ:', url);
-                
-                // Charger le fichier OBJ depuis l'URL
-                const response = await fetch(url);
-                console.log('📡 Réponse serveur:', response.status, response.statusText);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const objText = await response.text();
-                console.log('📄 Contenu OBJ chargé, taille:', objText.length, 'caractères');
-                console.log('📄 Début du contenu:', objText.substring(0, 200) + '...');
-
-                // Parser simple pour fichiers OBJ
-                const lines = objText.split('\n');
-                const vertices: THREE.Vector3[] = [];
-                const faces: number[][] = [];
-
-                for (const line of lines) {
-                    const parts = line.trim().split(/\s+/);
-                    if (parts[0] === 'v' && parts.length >= 4) {
-                        // Vertex: v x y z
-                        vertices.push(new THREE.Vector3(
-                            parseFloat(parts[1]),
-                            parseFloat(parts[2]),
-                            parseFloat(parts[3])
-                        ));
-                    } else if (parts[0] === 'f' && parts.length >= 4) {
-                        // Face: f v1 v2 v3 [v4]
-                        const faceVertices = parts.slice(1).map(v => parseInt(v) - 1); // OBJ uses 1-based indexing
-                        faces.push(faceVertices);
-                    }
-                }
-
-                // Créer la géométrie
-                console.log('🔢 Parsing terminé - Vertices trouvés:', vertices.length, 'Faces trouvées:', faces.length);
-                
-                const geometry = new THREE.BufferGeometry();
-                const positions: number[] = [];
-
-                // Convertir les faces en triangles
-                for (const face of faces) {
-                    if (face.length === 3) {
-                        // Triangle
-                        for (const vertexIndex of face) {
-                            if (vertices[vertexIndex]) {
-                                positions.push(vertices[vertexIndex].x, vertices[vertexIndex].y, vertices[vertexIndex].z);
-                            }
-                        }
-                    } else if (face.length === 4) {
-                        // Quad -> 2 triangles
-                        const quad = face.map(i => vertices[i]).filter(v => v !== undefined);
-                        if (quad.length === 4) {
-                            // Triangle 1: 0,1,2
-                            positions.push(quad[0].x, quad[0].y, quad[0].z);
-                            positions.push(quad[1].x, quad[1].y, quad[1].z);
-                            positions.push(quad[2].x, quad[2].y, quad[2].z);
-                            // Triangle 2: 0,2,3
-                            positions.push(quad[0].x, quad[0].y, quad[0].z);
-                            positions.push(quad[2].x, quad[2].y, quad[2].z);
-                            positions.push(quad[3].x, quad[3].y, quad[3].z);
-                        }
-                    }
-                }
-
-                // Calculer les normales automatiquement
-                geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-                geometry.computeVertexNormals();
-
-                // Créer le matériau et le mesh
-                const material = new THREE.MeshPhongMaterial({
-                    color: 0x4A90E2,
-                    shininess: 100,
-                    side: THREE.DoubleSide
-                });
-
-                const mesh = new THREE.Mesh(geometry, material);
-                mesh.castShadow = true;
-                mesh.receiveShadow = true;
-
-                // Centrer et redimensionner le modèle
-                const box = new THREE.Box3().setFromObject(mesh);
-                const center = box.getCenter(new THREE.Vector3());
-                const size = box.getSize(new THREE.Vector3());
-
-                // Centrer
-                mesh.position.sub(center);
-
-                // Redimensionner pour s'adapter à la vue (max 2 unités)
-                const maxDimension = Math.max(size.x, size.y, size.z);
-                if (maxDimension > 0) {
-                    const scale = 2 / maxDimension;
-                    mesh.scale.multiplyScalar(scale);
-                }
-
-                scene.add(mesh);
-                console.log('✅ Modèle OBJ ajouté à la scène avec succès!', mesh);
-
-                // Ajouter une rotation automatique
-                let rotation = 0;
-                const animate = () => {
-                    rotation += 0.01;
-                    mesh.rotation.y = rotation;
-                };
-
-                // Stocker la fonction d'animation pour l'utiliser dans la boucle principale
-                (mesh as THREE.Mesh & { customAnimation?: () => void }).customAnimation = animate;
-
-            } catch (error) {
-                console.error('❌ Erreur lors du chargement du modèle OBJ:', error);
-                console.error('❌ Détails de l\'erreur:', {
-                    message: (error as Error).message,
-                    stack: (error as Error).stack,
-                    url: url
-                });
-                // Fallback vers le modèle de démonstration
-                console.log('🔄 Basculement vers le modèle de démonstration...');
-                loadDemoModel(scene);
-            }
         };
 
         const init3DViewer = async () => {
             try {
                 setIsLoading(true);
                 setError(null);
-
-                // Nettoyage de la scène précédente
                 cleanup();
 
                 const mount = mountRef.current!;
-                const width = mount.clientWidth;
-                const height = mount.clientHeight;
-
-                // Créer la scène
                 const scene = new THREE.Scene();
                 scene.background = new THREE.Color(0xf0f0f0);
                 sceneRef.current = scene;
 
-                // Créer la caméra
-                const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+                const camera = new THREE.PerspectiveCamera(75, mount.clientWidth / mount.clientHeight, 0.1, 1000);
                 camera.position.set(0, 0, 5);
 
-                // Créer le renderer
                 const renderer = new THREE.WebGLRenderer({ antialias: true });
-                renderer.setSize(width, height);
+                renderer.setSize(mount.clientWidth, mount.clientHeight);
                 renderer.shadowMap.enabled = true;
                 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
                 rendererRef.current = renderer;
-
                 mount.appendChild(renderer.domElement);
 
-                // Ajouter des lumières
-                const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
-                scene.add(ambientLight);
-
+                // Lighting
+                scene.add(new THREE.AmbientLight(0x404040, 0.6));
                 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
                 directionalLight.position.set(1, 1, 1);
                 directionalLight.castShadow = true;
                 scene.add(directionalLight);
 
-                // Charger le modèle basé sur l'extension
-                console.log('🎯 ModelUrl reçu:', modelUrl);
+                // Load model (only OBJ supported)
                 const extension = modelUrl.split('.').pop()?.toLowerCase();
-                console.log('🔧 Extension détectée:', extension);
-                
-                switch (extension) {
-                    case 'gltf':
-                    case 'glb':
-                        console.log('📦 Chargement modèle GLTF/GLB');
-                        await loadGLTFModel(scene);
-                        break;
-                    case 'obj':
-                        console.log('📦 Chargement modèle OBJ');
-                        await loadOBJModel(scene, modelUrl);
-                        break;
-                    case 'fbx':
-                        console.log('📦 Chargement modèle FBX');
-                        await loadFBXModel(scene);
-                        break;
-                    default:
-                        console.log('📦 Chargement modèle démo (pas d\'extension reconnue)');
-                        loadDemoModel(scene);
+                if (extension !== 'obj') {
+                    throw new Error(`Format ${extension} non supporté. Utilisez un fichier OBJ.`);
                 }
+                
+                await loadOBJModel(scene, modelUrl);
 
-                // Contrôles de la caméra (rotation avec la souris)
+                // Mouse controls
                 let isDragging = false;
-                let previousMousePosition = { x: 0, y: 0 };
+                let previousMouse = { x: 0, y: 0 };
 
-                const handleMouseDown = (event: MouseEvent) => {
+                const onMouseDown = (e: MouseEvent) => {
                     isDragging = true;
-                    previousMousePosition = { x: event.clientX, y: event.clientY };
+                    previousMouse = { x: e.clientX, y: e.clientY };
                 };
 
-                const handleMouseMove = (event: MouseEvent) => {
+                const onMouseMove = (e: MouseEvent) => {
                     if (!isDragging) return;
-
-                    const deltaMove = {
-                        x: event.clientX - previousMousePosition.x,
-                        y: event.clientY - previousMousePosition.y
-                    };
-
-                    // Rotation de la caméra autour de la scène
-                    const rotationSpeed = 0.005;
-                    camera.position.x = camera.position.x * Math.cos(deltaMove.x * rotationSpeed) - camera.position.z * Math.sin(deltaMove.x * rotationSpeed);
-                    camera.position.z = camera.position.x * Math.sin(deltaMove.x * rotationSpeed) + camera.position.z * Math.cos(deltaMove.x * rotationSpeed);
-
+                    const delta = { x: e.clientX - previousMouse.x, y: e.clientY - previousMouse.y };
+                    const speed = 0.005;
+                    
+                    const x = camera.position.x * Math.cos(delta.x * speed) - camera.position.z * Math.sin(delta.x * speed);
+                    const z = camera.position.x * Math.sin(delta.x * speed) + camera.position.z * Math.cos(delta.x * speed);
+                    camera.position.x = x;
+                    camera.position.z = z;
                     camera.lookAt(scene.position);
-                    previousMousePosition = { x: event.clientX, y: event.clientY };
+                    
+                    previousMouse = { x: e.clientX, y: e.clientY };
                 };
 
-                const handleMouseUp = () => {
-                    isDragging = false;
-                };
+                const onMouseUp = () => { isDragging = false; };
 
-                // Zoom avec la molette
-                const handleWheel = (event: WheelEvent) => {
-                    event.preventDefault();
-                    const zoomSpeed = 0.1;
-                    camera.position.multiplyScalar(1 + (event.deltaY > 0 ? zoomSpeed : -zoomSpeed));
+                const onWheel = (e: WheelEvent) => {
+                    e.preventDefault();
+                    camera.position.multiplyScalar(1 + (e.deltaY > 0 ? 0.1 : -0.1));
                     camera.lookAt(scene.position);
                 };
 
-                renderer.domElement.addEventListener('mousedown', handleMouseDown);
-                renderer.domElement.addEventListener('mousemove', handleMouseMove);
-                renderer.domElement.addEventListener('mouseup', handleMouseUp);
-                renderer.domElement.addEventListener('wheel', handleWheel);
+                renderer.domElement.addEventListener('mousedown', onMouseDown);
+                renderer.domElement.addEventListener('mousemove', onMouseMove);
+                renderer.domElement.addEventListener('mouseup', onMouseUp);
+                renderer.domElement.addEventListener('wheel', onWheel);
 
                 // Animation loop
-                const animateScene = () => {
-                    animationIdRef.current = requestAnimationFrame(animateScene);
-
-                    // Exécuter les animations personnalisées des modèles
+                const animate = () => {
+                    animationIdRef.current = requestAnimationFrame(animate);
                     scene.children.forEach(child => {
-                        const meshChild = child as THREE.Mesh & { customAnimation?: () => void };
-                        if (meshChild.customAnimation) {
-                            meshChild.customAnimation();
-                        }
+                        const mesh = child as THREE.Mesh & { customAnimation?: () => void };
+                        mesh.customAnimation?.();
                     });
-
                     renderer.render(scene, camera);
                 };
-                animateScene();
+                animate();
 
                 setIsLoading(false);
-
             } catch (err) {
-                console.error('Erreur lors du chargement du modèle 3D:', err);
-                setError('Impossible de charger le modèle 3D. Vérifiez que le fichier est valide.');
+                setError(`Erreur: ${(err as Error).message}`);
                 setIsLoading(false);
             }
         };

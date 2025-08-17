@@ -94,10 +94,8 @@ export default function POIsContent() {
     if (!poiToDelete) return;
 
     try {
-      console.log(`🗑️ Suppression du POI avec ID: ${poiToDelete.id}`);
       setIsDeleting(poiToDelete.id);
       await poisAPI.delete(poiToDelete.id);
-      console.log(`✅ POI ${poiToDelete.id} supprimé avec succès`);
       await loadPOIs(); // Reload the list to get fresh data
       
       // Close modal and reset
@@ -105,11 +103,6 @@ export default function POIsContent() {
       setPoiToDelete(null);
     } catch (error) {
       console.error('❌ Erreur lors de la suppression du POI:', error);
-      console.error('❌ Détails de l\'erreur:', {
-        message: (error as Error).message,
-        stack: (error as Error).stack,
-        poiId: poiToDelete.id
-      });
       alert('Erreur lors de la suppression du POI. Veuillez réessayer.');
     } finally {
       setIsDeleting(null);
@@ -287,19 +280,19 @@ export default function POIsContent() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    {poi.modelUrl && poi.modelUrl.length > 0 ? (
+                    {poi.modelUrl && poi.modelUrl.trim().length > 0 && poi.modelUrl !== '' ? (
                       <div className="flex flex-col items-center space-y-1">
                         <button
                           onClick={() => open3DViewer(poi)}
                           className="flex items-center justify-center w-10 h-10 bg-blue-100 border border-blue-200 rounded-lg hover:bg-blue-200 transition-colors cursor-pointer"
-                          title="Voir le modèle 3D"
+                          title={`Voir le modèle 3D: ${poi.modelUrl}`}
                         >
                           <div className="w-5 h-5 bg-blue-500 rounded transform rotate-12"></div>
                         </button>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center space-y-1">
-                        <div className="flex items-center justify-center w-10 h-10 bg-gray-100 border border-gray-200 rounded-lg">
+                        <div className="flex items-center justify-center w-10 h-10 bg-gray-100 border border-gray-200 rounded-lg" title="Pas de modèle 3D disponible">
                           <span className="text-xs text-gray-400">N/A</span>
                         </div>
                       </div>
