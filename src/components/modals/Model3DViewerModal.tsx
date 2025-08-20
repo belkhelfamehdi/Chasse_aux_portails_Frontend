@@ -17,6 +17,72 @@ export default function Model3DViewerModal({ isOpen, onClose, modelUrl, modelNam
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    // MTL parser function
+    const parseMTL = async (mtlText: string, baseUrl: string): Promise<Map<string, THREE.Material>> => {
+        const materials = new Map<string, THREE.Material>();
+        const lines = mtlText.split('\n');
+        let currentMaterial: THREE.MeshPhongMaterial | null = null;
+        let currentMaterialName = '';
+
+        for (const line of lines) {
+            const parts = line.trim().split(/\s+/);
+            
+            if (parts[0] === 'newmtl' && parts.length >= 2) {
+                // Save previous material
+                if (currentMaterial && currentMaterialName) {
+                    materials.set(currentMaterialName, currentMaterial);
+                }
+                
+                // Start new material
+                currentMaterialName = parts[1];
+                currentMaterial = new THREE.MeshPhongMaterial({
+                    side: THREE.DoubleSide
+                });
+            } else if (currentMaterial) {
+                if (parts[0] === 'Kd' && parts.length >= 4) {
+                    // Diffuse color
+                    currentMaterial.color.setRGB(
+                        parseFloat(parts[1]),
+                        parseFloat(parts[2]),
+                        parseFloat(parts[3])
+                    );
+                } else if (parts[0] === 'Ks' && parts.length >= 4) {
+                    // Specular color
+                    currentMaterial.specular.setRGB(
+                        parseFloat(parts[1]),
+                        parseFloat(parts[2]),
+                        parseFloat(parts[3])
+                    );
+                } else if (parts[0] === 'Ns' && parts.length >= 2) {
+                    // Shininess
+                    currentMaterial.shininess = parseFloat(parts[1]);
+                } else if (parts[0] === 'd' && parts.length >= 2) {
+                    // Opacity
+                    const opacity = parseFloat(parts[1]);
+                    currentMaterial.opacity = opacity;
+                    currentMaterial.transparent = opacity < 1.0;
+                } else if (parts[0] === 'map_Kd' && parts.length >= 2) {
+                    // Diffuse texture
+                    try {
+                        const texturePath = parts.slice(1).join(' ');
+                        const textureUrl = new URL(texturePath, baseUrl).href;
+                        const textureLoader = new THREE.TextureLoader();
+                        currentMaterial.map = textureLoader.load(textureUrl);
+                    } catch {
+                        // Texture loading failed, continue without texture
+                    }
+                }
+            }
+        }
+
+        // Save last material
+        if (currentMaterial && currentMaterialName) {
+            materials.set(currentMaterialName, currentMaterial);
+        }
+
+        return materials;
+    };
+
     useEffect(() => {
         if (!isOpen || !mountRef.current || !modelUrl?.trim()) return;
 
@@ -27,86 +93,218 @@ export default function Model3DViewerModal({ isOpen, onClose, modelUrl, modelNam
             }
             
             const objText = await response.text();
+            
+            // Try to load MTL file if referenced
+            let mtlMaterials: Map<string, THREE.Material> = new Map();
+            const mtlUrl = url.replace('.obj', '.mtl');
+            
+            try {
+                const mtlResponse = await fetch(mtlUrl);
+                if (mtlResponse.ok) {
+                    const mtlText = await mtlResponse.text();
+                    mtlMaterials = await parseMTL(mtlText, url);
+                }
+            } catch {
+                // MTL file not found or invalid, use default materials
+                console.log('MTL file not found, using default materials');
+            }
+            
             const lines = objText.split('\n');
+            
+            // Parse OBJ data
             const vertices: THREE.Vector3[] = [];
-            const faces: number[][] = [];
+            const normals: THREE.Vector3[] = [];
+            const uvs: THREE.Vector2[] = [];
+            const faces: { v: number[], vt: number[], vn: number[] }[] = [];
+            const materials: Map<string, THREE.Material> = new Map();
+            let currentMaterial = 'default';
+            const groups: { material: string, faces: typeof faces }[] = [];
 
             for (const line of lines) {
                 const parts = line.trim().split(/\s+/);
+                
                 if (parts[0] === 'v' && parts.length >= 4) {
+                    // Vertex positions
                     vertices.push(new THREE.Vector3(
                         parseFloat(parts[1]),
                         parseFloat(parts[2]),
                         parseFloat(parts[3])
                     ));
+                } else if (parts[0] === 'vn' && parts.length >= 4) {
+                    // Vertex normals
+                    normals.push(new THREE.Vector3(
+                        parseFloat(parts[1]),
+                        parseFloat(parts[2]),
+                        parseFloat(parts[3])
+                    ));
+                } else if (parts[0] === 'vt' && parts.length >= 3) {
+                    // Texture coordinates
+                    uvs.push(new THREE.Vector2(
+                        parseFloat(parts[1]),
+                        parseFloat(parts[2])
+                    ));
+                } else if (parts[0] === 'usemtl' && parts.length >= 2) {
+                    // Material usage
+                    if (faces.length > 0) {
+                        groups.push({ material: currentMaterial, faces: [...faces] });
+                        faces.length = 0;
+                    }
+                    currentMaterial = parts[1];
                 } else if (parts[0] === 'f' && parts.length >= 4) {
-                    const faceVertices = parts.slice(1).map(v => parseInt(v) - 1);
-                    faces.push(faceVertices);
+                    // Face definition
+                    const faceVertices: number[] = [];
+                    const faceTextures: number[] = [];
+                    const faceNormals: number[] = [];
+                    
+                    for (let i = 1; i < parts.length; i++) {
+                        const indices = parts[i].split('/');
+                        faceVertices.push(parseInt(indices[0]) - 1);
+                        faceTextures.push(indices[1] ? parseInt(indices[1]) - 1 : -1);
+                        faceNormals.push(indices[2] ? parseInt(indices[2]) - 1 : -1);
+                    }
+                    
+                    faces.push({
+                        v: faceVertices,
+                        vt: faceTextures,
+                        vn: faceNormals
+                    });
                 }
             }
 
-            if (vertices.length === 0 || faces.length === 0) {
+            // Add remaining faces to groups
+            if (faces.length > 0) {
+                groups.push({ material: currentMaterial, faces: [...faces] });
+            }
+
+            if (vertices.length === 0) {
                 throw new Error('Fichier OBJ invalide: aucune géométrie trouvée');
             }
-            
-            const geometry = new THREE.BufferGeometry();
-            const positions: number[] = [];
 
-            for (const face of faces) {
-                if (face.length === 3) {
-                    for (const vertexIndex of face) {
-                        if (vertices[vertexIndex]) {
-                            const vertex = vertices[vertexIndex];
-                            positions.push(vertex.x, vertex.y, vertex.z);
-                        }
-                    }
-                } else if (face.length === 4) {
-                    const quad = face.map(i => vertices[i]).filter(v => v !== undefined);
-                    if (quad.length === 4) {
-                        // Triangle 1: 0,1,2
-                        positions.push(quad[0].x, quad[0].y, quad[0].z);
-                        positions.push(quad[1].x, quad[1].y, quad[1].z);
-                        positions.push(quad[2].x, quad[2].y, quad[2].z);
-                        // Triangle 2: 0,2,3
-                        positions.push(quad[0].x, quad[0].y, quad[0].z);
-                        positions.push(quad[2].x, quad[2].y, quad[2].z);
-                        positions.push(quad[3].x, quad[3].y, quad[3].z);
-                    }
-                }
-            }
-
-            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-            geometry.computeVertexNormals();
-
-            const material = new THREE.MeshPhongMaterial({
-                color: 0x4A90E2,
-                shininess: 100,
-                side: THREE.DoubleSide
+            // Merge MTL materials with default materials
+            mtlMaterials.forEach((material, name) => {
+                materials.set(name, material);
             });
 
-            const mesh = new THREE.Mesh(geometry, material);
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
+            // Create default material if needed
+            if (!materials.has('default')) {
+                const defaultMaterial = new THREE.MeshPhongMaterial({
+                    color: 0xcccccc,
+                    shininess: 30,
+                    side: THREE.DoubleSide
+                });
+                materials.set('default', defaultMaterial);
+            }
 
-            // Centrer et redimensionner
-            const box = new THREE.Box3().setFromObject(mesh);
+            // Create geometries for each material group
+            const meshes: THREE.Mesh[] = [];
+            
+            for (const group of groups.length > 0 ? groups : [{ material: 'default', faces: faces }]) {
+                const geometry = new THREE.BufferGeometry();
+                const positions: number[] = [];
+                const textureCoords: number[] = [];
+                const vertexNormals: number[] = [];
+
+                for (const face of group.faces) {
+                    if (face.v.length === 3) {
+                        // Triangle face
+                        for (let i = 0; i < 3; i++) {
+                            const vertexIndex = face.v[i];
+                            const uvIndex = face.vt[i];
+                            const normalIndex = face.vn[i];
+
+                            if (vertices[vertexIndex]) {
+                                const vertex = vertices[vertexIndex];
+                                positions.push(vertex.x, vertex.y, vertex.z);
+                            }
+
+                            if (uvIndex >= 0 && uvs[uvIndex]) {
+                                const uv = uvs[uvIndex];
+                                textureCoords.push(uv.x, uv.y);
+                            } else {
+                                textureCoords.push(0, 0);
+                            }
+
+                            if (normalIndex >= 0 && normals[normalIndex]) {
+                                const normal = normals[normalIndex];
+                                vertexNormals.push(normal.x, normal.y, normal.z);
+                            } else {
+                                vertexNormals.push(0, 0, 1);
+                            }
+                        }
+                    } else if (face.v.length === 4) {
+                        // Quad face - split into two triangles
+                        const indices = [0, 1, 2, 0, 2, 3];
+                        
+                        for (const i of indices) {
+                            const vertexIndex = face.v[i];
+                            const uvIndex = face.vt[i];
+                            const normalIndex = face.vn[i];
+
+                            if (vertices[vertexIndex]) {
+                                const vertex = vertices[vertexIndex];
+                                positions.push(vertex.x, vertex.y, vertex.z);
+                            }
+
+                            if (uvIndex >= 0 && uvs[uvIndex]) {
+                                const uv = uvs[uvIndex];
+                                textureCoords.push(uv.x, uv.y);
+                            } else {
+                                textureCoords.push(0, 0);
+                            }
+
+                            if (normalIndex >= 0 && normals[normalIndex]) {
+                                const normal = normals[normalIndex];
+                                vertexNormals.push(normal.x, normal.y, normal.z);
+                            } else {
+                                vertexNormals.push(0, 0, 1);
+                            }
+                        }
+                    }
+                }
+
+                if (positions.length === 0) continue;
+
+                geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+                geometry.setAttribute('uv', new THREE.Float32BufferAttribute(textureCoords, 2));
+                
+                if (vertexNormals.every(n => n !== 0)) {
+                    geometry.setAttribute('normal', new THREE.Float32BufferAttribute(vertexNormals, 3));
+                } else {
+                    geometry.computeVertexNormals();
+                }
+
+                // Get material or use default
+                const material = materials.get(group.material) || materials.get('default')!;
+                
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                meshes.push(mesh);
+            }
+
+            // Group all meshes
+            const group = new THREE.Group();
+            meshes.forEach(mesh => group.add(mesh));
+
+            // Center and scale the entire group
+            const box = new THREE.Box3().setFromObject(group);
             const center = box.getCenter(new THREE.Vector3());
             const size = box.getSize(new THREE.Vector3());
             
-            mesh.position.sub(center);
+            group.position.sub(center);
             
             const maxDimension = Math.max(size.x, size.y, size.z);
             if (maxDimension > 0) {
-                mesh.scale.multiplyScalar(2 / maxDimension);
+                group.scale.multiplyScalar(2 / maxDimension);
             }
 
-            scene.add(mesh);
+            scene.add(group);
 
-            // Animation de rotation
+            // Animation de rotation for the entire group
             let rotation = 0;
-            (mesh as THREE.Mesh & { customAnimation?: () => void }).customAnimation = () => {
+            (group as THREE.Group & { customAnimation?: () => void }).customAnimation = () => {
                 rotation += 0.01;
-                mesh.rotation.y = rotation;
+                group.rotation.y = rotation;
             };
         };
 
@@ -131,12 +329,27 @@ export default function Model3DViewerModal({ isOpen, onClose, modelUrl, modelNam
                 rendererRef.current = renderer;
                 mount.appendChild(renderer.domElement);
 
-                // Lighting
-                scene.add(new THREE.AmbientLight(0x404040, 0.6));
+                // Enhanced lighting setup for better material visualization
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+                scene.add(ambientLight);
+                
+                // Main directional light
                 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-                directionalLight.position.set(1, 1, 1);
+                directionalLight.position.set(5, 5, 5);
                 directionalLight.castShadow = true;
+                directionalLight.shadow.mapSize.width = 2048;
+                directionalLight.shadow.mapSize.height = 2048;
                 scene.add(directionalLight);
+                
+                // Fill light from opposite side
+                const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
+                fillLight.position.set(-5, -5, -5);
+                scene.add(fillLight);
+                
+                // Rim light for better edge definition
+                const rimLight = new THREE.DirectionalLight(0xffffff, 0.2);
+                rimLight.position.set(0, 10, -5);
+                scene.add(rimLight);
 
                 // Load model (only OBJ supported)
                 const extension = modelUrl.split('.').pop()?.toLowerCase();
