@@ -36,7 +36,7 @@ export default function Model3DViewerModal({ isOpen, onClose, modelUrl, modelNam
                 // Start new material
                 currentMaterialName = parts[1];
                 currentMaterial = new THREE.MeshPhongMaterial({
-                    side: THREE.DoubleSide
+                    side: THREE.DoubleSide // Ensure both sides are rendered
                 });
             } else if (currentMaterial) {
                 if (parts[0] === 'Kd' && parts.length >= 4) {
@@ -106,13 +106,13 @@ export default function Model3DViewerModal({ isOpen, onClose, modelUrl, modelNam
                 }
             } catch {
                 // MTL file not found or invalid, use default materials
-                console.log('MTL file not found, using default materials');
             }
             
             const lines = objText.split('\n');
             
             // Parse OBJ data
             const vertices: THREE.Vector3[] = [];
+            const vertexColors: THREE.Color[] = [];
             const normals: THREE.Vector3[] = [];
             const uvs: THREE.Vector2[] = [];
             const faces: { v: number[], vt: number[], vn: number[] }[] = [];
@@ -130,6 +130,17 @@ export default function Model3DViewerModal({ isOpen, onClose, modelUrl, modelNam
                         parseFloat(parts[2]),
                         parseFloat(parts[3])
                     ));
+                    
+                    // Check for vertex colors (OBJ format: v x y z r g b)
+                    if (parts.length >= 7) {
+                        vertexColors.push(new THREE.Color(
+                            parseFloat(parts[4]),
+                            parseFloat(parts[5]),
+                            parseFloat(parts[6])
+                        ));
+                    } else {
+                        vertexColors.push(new THREE.Color(1, 1, 1)); // Default white
+                    }
                 } else if (parts[0] === 'vn' && parts.length >= 4) {
                     // Vertex normals
                     normals.push(new THREE.Vector3(
@@ -188,9 +199,11 @@ export default function Model3DViewerModal({ isOpen, onClose, modelUrl, modelNam
             // Create default material if needed
             if (!materials.has('default')) {
                 const defaultMaterial = new THREE.MeshPhongMaterial({
-                    color: 0xcccccc,
+                    color: 0xffffff, // Pure white to show native geometry colors
                     shininess: 30,
-                    side: THREE.DoubleSide
+                    side: THREE.DoubleSide, // Render both front and back faces
+                    transparent: false,
+                    flatShading: false
                 });
                 materials.set('default', defaultMaterial);
             }
@@ -201,6 +214,7 @@ export default function Model3DViewerModal({ isOpen, onClose, modelUrl, modelNam
             for (const group of groups.length > 0 ? groups : [{ material: 'default', faces: faces }]) {
                 const geometry = new THREE.BufferGeometry();
                 const positions: number[] = [];
+                const colors: number[] = [];
                 const textureCoords: number[] = [];
                 const vertexNormals: number[] = [];
 
@@ -215,6 +229,10 @@ export default function Model3DViewerModal({ isOpen, onClose, modelUrl, modelNam
                             if (vertices[vertexIndex]) {
                                 const vertex = vertices[vertexIndex];
                                 positions.push(vertex.x, vertex.y, vertex.z);
+                                
+                                // Add vertex color
+                                const color = vertexColors[vertexIndex] || new THREE.Color(1, 1, 1);
+                                colors.push(color.r, color.g, color.b);
                             }
 
                             if (uvIndex >= 0 && uvs[uvIndex]) {
@@ -243,6 +261,10 @@ export default function Model3DViewerModal({ isOpen, onClose, modelUrl, modelNam
                             if (vertices[vertexIndex]) {
                                 const vertex = vertices[vertexIndex];
                                 positions.push(vertex.x, vertex.y, vertex.z);
+                                
+                                // Add vertex color
+                                const color = vertexColors[vertexIndex] || new THREE.Color(1, 1, 1);
+                                colors.push(color.r, color.g, color.b);
                             }
 
                             if (uvIndex >= 0 && uvs[uvIndex]) {
@@ -265,6 +287,7 @@ export default function Model3DViewerModal({ isOpen, onClose, modelUrl, modelNam
                 if (positions.length === 0) continue;
 
                 geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
                 geometry.setAttribute('uv', new THREE.Float32BufferAttribute(textureCoords, 2));
                 
                 if (vertexNormals.every(n => n !== 0)) {
@@ -272,9 +295,25 @@ export default function Model3DViewerModal({ isOpen, onClose, modelUrl, modelNam
                 } else {
                     geometry.computeVertexNormals();
                 }
+                
+                // Ensure proper geometry bounds
+                geometry.computeBoundingBox();
+                geometry.computeBoundingSphere();
 
                 // Get material or use default
-                const material = materials.get(group.material) || materials.get('default')!;
+                let material = materials.get(group.material) || materials.get('default')!;
+                
+                // Check if we have vertex colors and enable them
+                const hasVertexColors = colors.some(c => c !== 1.0);
+                if (hasVertexColors) {
+                    // Clone material and enable vertex colors
+                    material = material.clone();
+                    (material as THREE.MeshPhongMaterial).vertexColors = true;
+                    (material as THREE.MeshPhongMaterial).side = THREE.DoubleSide; // Ensure both sides are rendered
+                } else {
+                    // Ensure original material renders both sides
+                    (material as THREE.MeshPhongMaterial).side = THREE.DoubleSide;
+                }
                 
                 const mesh = new THREE.Mesh(geometry, material);
                 mesh.castShadow = true;
@@ -295,17 +334,11 @@ export default function Model3DViewerModal({ isOpen, onClose, modelUrl, modelNam
             
             const maxDimension = Math.max(size.x, size.y, size.z);
             if (maxDimension > 0) {
-                group.scale.multiplyScalar(2 / maxDimension);
+                // Scale to fit nicely in view (larger scale factor)
+                group.scale.multiplyScalar(3 / maxDimension);
             }
 
             scene.add(group);
-
-            // Animation de rotation for the entire group
-            let rotation = 0;
-            (group as THREE.Group & { customAnimation?: () => void }).customAnimation = () => {
-                rotation += 0.01;
-                group.rotation.y = rotation;
-            };
         };
 
         const init3DViewer = async () => {
@@ -320,21 +353,22 @@ export default function Model3DViewerModal({ isOpen, onClose, modelUrl, modelNam
                 sceneRef.current = scene;
 
                 const camera = new THREE.PerspectiveCamera(75, mount.clientWidth / mount.clientHeight, 0.1, 1000);
-                camera.position.set(0, 0, 5);
+                camera.position.set(0, 0, 4); // Moved camera closer
 
                 const renderer = new THREE.WebGLRenderer({ antialias: true });
                 renderer.setSize(mount.clientWidth, mount.clientHeight);
                 renderer.shadowMap.enabled = true;
                 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                renderer.sortObjects = false; // Prevent sorting issues that can cause holes
                 rendererRef.current = renderer;
                 mount.appendChild(renderer.domElement);
 
                 // Enhanced lighting setup for better material visualization
-                const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.6); // Increased ambient light
                 scene.add(ambientLight);
                 
                 // Main directional light
-                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0); // Increased intensity
                 directionalLight.position.set(5, 5, 5);
                 directionalLight.castShadow = true;
                 directionalLight.shadow.mapSize.width = 2048;
@@ -342,12 +376,12 @@ export default function Model3DViewerModal({ isOpen, onClose, modelUrl, modelNam
                 scene.add(directionalLight);
                 
                 // Fill light from opposite side
-                const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
+                const fillLight = new THREE.DirectionalLight(0xffffff, 0.4); // Increased fill light
                 fillLight.position.set(-5, -5, -5);
                 scene.add(fillLight);
                 
                 // Rim light for better edge definition
-                const rimLight = new THREE.DirectionalLight(0xffffff, 0.2);
+                const rimLight = new THREE.DirectionalLight(0xffffff, 0.3); // Increased rim light
                 rimLight.position.set(0, 10, -5);
                 scene.add(rimLight);
 
@@ -398,10 +432,6 @@ export default function Model3DViewerModal({ isOpen, onClose, modelUrl, modelNam
                 // Animation loop
                 const animate = () => {
                     animationIdRef.current = requestAnimationFrame(animate);
-                    scene.children.forEach(child => {
-                        const mesh = child as THREE.Mesh & { customAnimation?: () => void };
-                        mesh.customAnimation?.();
-                    });
                     renderer.render(scene, camera);
                 };
                 animate();
