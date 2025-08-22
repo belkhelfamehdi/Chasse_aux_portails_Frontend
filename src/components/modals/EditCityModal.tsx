@@ -107,7 +107,7 @@ const EditCityModal: React.FC<EditCityModalProps> = ({ isOpen, onClose, initialC
               {isLoading ? (
                 <>
                   <Loading size="sm" />
-                  <span className="ml-2">Saving...</span>
+                  <span className="ml-2">Enregistrement...</span>
                 </>
               ) : (
                 'Enregistrer'

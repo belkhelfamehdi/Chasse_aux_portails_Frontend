@@ -216,7 +216,7 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, onSubmit
                             {isLoading ? (
                                 <>
                                     <Loading size="sm" />
-                                    <span className="ml-2">Adding...</span>
+                                    <span className="ml-2">Ajout en cours...</span>
                                 </>
                             ) : (
                                 'Ajouter admin'

@@ -25,7 +25,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
     const handleFileSelect = (file: File | null) => {
         if (file && maxSize && file.size > maxSize * 1024 * 1024) {
-            alert(`File size should be less than ${maxSize}MB`);
+            alert(`La taille du fichier doit être inférieure à ${maxSize}MB`);
             return;
         }
         setSelectedFile(file);
@@ -133,13 +133,13 @@ const FileUpload: React.FC<FileUploadProps> = ({
                         <span className="font-medium text-gray-700">{label}</span>
                         {selectedFile && (
                             <div className="mt-1 text-sm text-green-600">
-                                Selected: {selectedFile.name}
+                                Sélectionné : {selectedFile.name}
                             </div>
                         )}
                     </div>
                     
                     <p className="text-xs text-gray-500">
-                        Supported formats: {acceptedFormats.join(', ')}
+                        Formats supportés : {acceptedFormats.join(', ')}
                     </p>
                 </div>
             </button>

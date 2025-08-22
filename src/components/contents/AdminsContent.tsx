@@ -151,7 +151,7 @@ export default function AdminsContent() {
   if (isLoading) {
     return (
       <div className="p-6">
-        <Loading size="lg" message="Loading admins..." className="min-h-96" />
+        <Loading size="lg" message="Chargement des administrateurs..." className="min-h-96" />
       </div>
     );
   }
@@ -161,8 +161,8 @@ export default function AdminsContent() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Admins</h1>
-          <p className="text-sm text-primary">Gérer les admins</p>
+          <h1 className="text-2xl font-bold text-gray-900">Administrateurs</h1>
+          <p className="text-sm text-primary">Gérer les administrateurs</p>
         </div>
       </div>
 
@@ -249,7 +249,7 @@ export default function AdminsContent() {
                         className="text-link font-semibold transition-colors cursor-pointer"
                         onClick={() => openEditAdmin(admin)}
                       >
-                        <span className="text-sm">Edit</span>
+                        <span className="text-sm">Modifier</span>
                       </button>
                       <span className="text-gray-300">|</span>
                       <button
@@ -261,7 +261,7 @@ export default function AdminsContent() {
                         {isDeleting === admin.id ? (
                           <Loading size="sm" />
                         ) : (
-                          <span className="text-sm">Delete</span>
+                          <span className="text-sm">Supprimer</span>
                         )}
                       </button>
                     </div>

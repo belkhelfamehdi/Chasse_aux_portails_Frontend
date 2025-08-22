@@ -185,7 +185,7 @@ export default function POIsContent() {
   if (isLoading) {
     return (
       <div className="p-6">
-        <Loading size="lg" message="Loading points of interest..." className="min-h-96" />
+        <Loading size="lg" message="Chargement des points d'intérêt..." className="min-h-96" />
       </div>
     );
   }
@@ -195,8 +195,8 @@ export default function POIsContent() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Points of Interest</h1>
-          <p className="text-sm text-primary">Manage points of interest for the selected city.</p>
+          <h1 className="text-2xl font-bold text-gray-900">Points d'Intérêt</h1>
+          <p className="text-sm text-primary">Gérer les points d'intérêt pour la ville sélectionnée.</p>
         </div>
       </div>
 
@@ -205,12 +205,12 @@ export default function POIsContent() {
         <div className='w-full'>
           <div className="relative max-w-md">
             <MagnifyingGlassIcon className="absolute w-4 h-4 text-gray-400 left-3 top-3" />
-            <input
+                        <input
               type="text"
-              placeholder="Search points of interest"
+              placeholder="Rechercher des points d'intérêt"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50"
+              className="w-full py-2 pl-10 pr-3 text-sm text-gray-700 placeholder-gray-400 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
             />
           </div>
         </div>
@@ -305,7 +305,7 @@ export default function POIsContent() {
                         onClick={() => openEdit(poi)}
                         className="text-link transition-colors cursor-pointer"
                       >
-                        <span className="text-sm">Edit</span>
+                        <span className="text-sm">Modifier</span>
                       </button>
                       <span className="text-gray-300">|</span>
                       <button
@@ -317,7 +317,7 @@ export default function POIsContent() {
                         {isDeleting === poi.id ? (
                           <Loading size="sm" />
                         ) : (
-                          <span className="text-sm">Delete</span>
+                          <span className="text-sm">Supprimer</span>
                         )}
                       </button>
                     </div>

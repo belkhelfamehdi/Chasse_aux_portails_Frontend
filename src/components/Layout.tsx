@@ -11,10 +11,10 @@ const Layout: React.FC = () => {
     const { user, logout } = useAuth();
 
     const navigationItems = [
-        { path: '/dashboard', icon: HomeIcon, label: 'Dashboard' },
+        { path: '/dashboard', icon: HomeIcon, label: 'Tableau de Bord' },
         { path: '/cities', icon: MapIcon, label: 'Villes' },
-        { path: '/pois', icon: MapPinIcon, label: 'POIs' },
-        { path: '/admins', icon: UsersIcon, label: 'Admins', requiresSuperAdmin: true },
+        { path: '/pois', icon: MapPinIcon, label: 'Points d\'Intérêt' },
+        { path: '/admins', icon: UsersIcon, label: 'Administrateurs', requiresSuperAdmin: true },
         { path: '/settings', icon: Cog6ToothIcon, label: 'Paramètres' },
     ];
 
@@ -24,14 +24,14 @@ const Layout: React.FC = () => {
         
         // Handle root/dashboard case
         if (pathSegments.length === 0 || pathSegments[0] === 'dashboard') {
-            return 'Dashboard';
+            return 'Tableau de Bord';
         }
         
-        const breadcrumbItems = ['Dashboard'];
+        const breadcrumbItems = ['Tableau de Bord'];
         
         for (const segment of pathSegments) {
             const navItem = navigationItems.find(item => item.path === `/${segment}`);
-            if (navItem && navItem.label !== 'Dashboard') {
+            if (navItem && navItem.label !== 'Tableau de Bord') {
                 breadcrumbItems.push(navItem.label);
             }
         }
@@ -49,9 +49,9 @@ const Layout: React.FC = () => {
             case '/cities':
                 return 'Gestion des Villes';
             case '/pois':
-                return 'Gestion des POIs';
+                return 'Gestion des Points d\'Intérêt';
             case '/admins':
-                return 'Gestion des Admins';
+                return 'Gestion des Administrateurs';
             case '/settings':
                 return 'Paramètres';
             default:
@@ -90,9 +90,9 @@ const Layout: React.FC = () => {
     const getRoleDisplayName = () => {
         switch (user?.role) {
             case 'SUPER_ADMIN':
-                return 'Super Admin';
+                return 'Super Administrateur';
             case 'ADMIN':
-                return 'Admin';
+                return 'Administrateur';
             default:
                 return 'Utilisateur';
         }

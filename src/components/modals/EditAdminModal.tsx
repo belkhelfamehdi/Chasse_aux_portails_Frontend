@@ -120,7 +120,7 @@ const EditAdminModal: React.FC<EditAdminModalProps> = ({ isOpen, onClose, initia
               className="flex items-center justify-center px-4 py-2 font-normal transition-colors rounded-lg"
               style={{ backgroundColor: (isFormValid && !isLoading) ? '#23B2A4' : '#d1d5db', color: (isFormValid && !isLoading) ? 'white' : '#6b7280', cursor: (isFormValid && !isLoading) ? 'pointer' : 'not-allowed' }}
             >
-              {isLoading ? (<><Loading size="sm" /><span className="ml-2">Saving...</span></>) : 'Enregistrer'}
+              {isLoading ? (<><Loading size="sm" /><span className="ml-2">Enregistrement...</span></>) : 'Enregistrer'}
             </button>
           </div>
         </div>

@@ -109,7 +109,7 @@ const EditPOIModal: React.FC<EditPOIModalProps> = ({ isOpen, onClose, initialPOI
               cursor: (isFormValid && !isLoading) ? 'pointer' : 'not-allowed'
             }}
           >
-            {isLoading ? (<><Loading size="sm" /><span className="ml-2">Saving...</span></>) : 'Enregistrer'}
+            {isLoading ? (<><Loading size="sm" /><span className="ml-2">Enregistrement...</span></>) : 'Enregistrer'}
           </button>
         </div>
       </div>

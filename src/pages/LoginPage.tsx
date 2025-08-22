@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/useAuth';
-import Button from '../components/Button';
+import { useNotifications } from '../contexts/useNotifications';
+import { LoadingSpinner } from '../components/Loading';
+import ForgotPasswordModal from '../components/modals/ForgotPasswordModal';
 import Logo from '../assets/logo.png';
 
 const LoginPage: React.FC = () => {
     const navigate = useNavigate();
     const { login, isLoginLoading } = useAuth();
+    const { success, error: showError } = useNotifications();
     const [formData, setFormData] = useState({
         email: '',
         password: '',
         rememberMe: false
     });
     const [error, setError] = useState<string | null>(null);
+    const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -20,9 +24,12 @@ const LoginPage: React.FC = () => {
 
         try {
             await login(formData.email, formData.password, formData.rememberMe);
+            success('Connexion réussie', 'Bienvenue dans votre tableau de bord !');
             navigate('/dashboard');
         } catch (error) {
-            setError(error instanceof Error ? error.message : 'Une erreur est survenue');
+            const errorMessage = error instanceof Error ? error.message : 'Une erreur est survenue';
+            setError(errorMessage);
+            showError('Échec de la connexion', errorMessage);
         }
     };
 
@@ -44,7 +51,7 @@ const LoginPage: React.FC = () => {
                 {/* Login Form */}
                 <form onSubmit={handleSubmit} className="w-full space-y-10">
                     {error && (
-                        <div className="p-3 text-sm text-red-600 bg-red-100 border border-red-300 rounded-lg">
+                        <div className="p-3 text-sm text-red-600 bg-red-100 border border-red-300 rounded-lg animate-pulse">
                             {error}
                         </div>
                     )}
@@ -62,7 +69,8 @@ const LoginPage: React.FC = () => {
                                 placeholder="Adresse e-mail"
                                 value={formData.email}
                                 onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                                className="w-full py-3 pl-10 pr-3 text-sm text-gray-700 placeholder-gray-400 transition-colors border border-gray-300 rounded-t-lg bg-gray-50 focus:outline-none focus:border-teal-500 focus:bg-white"
+                                className="w-full py-3 pl-10 pr-3 text-sm text-gray-700 placeholder-gray-400 transition-all duration-200 border border-gray-300 rounded-t-lg bg-gray-50 focus:outline-none focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-200"
+                                disabled={isLoginLoading}
                                 required
                             />
                         </div>
@@ -79,11 +87,13 @@ const LoginPage: React.FC = () => {
                                 placeholder="Mot de passe"
                                 value={formData.password}
                                 onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                                className="w-full py-3 pl-10 pr-3 text-sm text-gray-700 placeholder-gray-400 transition-colors border border-gray-300 rounded-b-lg bg-gray-50 focus:outline-none focus:border-teal-500 focus:bg-white"
+                                className="w-full py-3 pl-10 pr-3 text-sm text-gray-700 placeholder-gray-400 transition-all duration-200 border border-gray-300 rounded-b-lg bg-gray-50 focus:outline-none focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-200"
+                                disabled={isLoginLoading}
                                 required
                             />
                         </div>
                     </div>
+                    
                     {/* Remember Me and Forgot Password */}
                     <div className="flex items-center justify-between text-sm">
                         <label className="flex items-center">
@@ -92,31 +102,42 @@ const LoginPage: React.FC = () => {
                                 checked={formData.rememberMe}
                                 onChange={(e) => setFormData(prev => ({ ...prev, rememberMe: e.target.checked }))}
                                 className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                                disabled={isLoginLoading}
                             />
                             <span className="ml-2 text-gray-600">Se souvenir de moi</span>
                         </label>
                         <button
                             type="button"
-                            className="font-medium text-teal-600 cursor-pointer hover:text-teal-800"
-                            onClick={() => alert('Fonctionnalité à implémenter')}
+                            className="font-medium text-teal-600 cursor-pointer hover:text-teal-800 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            onClick={() => setIsForgotPasswordOpen(true)}
+                            disabled={isLoginLoading}
                         >
                             Mot de passe oublié ?
                         </button>
                     </div>
 
                     {/* Submit Button */}
-                    <Button
-                        className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
+                    <button
+                        type="submit"
+                        className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center ${
                             isFormValid && !isLoginLoading
-                                ? 'bg-teal-500 hover:bg-teal-600 text-white cursor-pointer'
+                                ? 'bg-teal-500 hover:bg-teal-600 text-white cursor-pointer shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
                                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         }`}
-                        label={isLoginLoading ? 'Connexion...' : 'Se connecter'}
-                        onClick={() => handleSubmit(new Event('submit') as unknown as React.FormEvent)}
                         disabled={!isFormValid || isLoginLoading}
-                    />
+                    >
+                        <div className="flex items-center justify-center space-x-2">
+                            {isLoginLoading && <LoadingSpinner size="sm" className="text-white" />}
+                            <span>{isLoginLoading ? 'Connexion...' : 'Se connecter'}</span>
+                        </div>
+                    </button>
                 </form>
             </div>
+
+            <ForgotPasswordModal
+                isOpen={isForgotPasswordOpen}
+                onClose={() => setIsForgotPasswordOpen(false)}
+            />
         </div>
     );
 };
