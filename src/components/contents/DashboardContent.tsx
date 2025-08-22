@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { MapPinIcon, UsersIcon, MapIcon } from '@heroicons/react/24/outline';
 import { citiesAPI, poisAPI, adminsAPI } from '../../services/api';
+import { useAuth } from '../../contexts/useAuth';
+import AdminDashboardContent from './AdminDashboardContent';
 
 interface Stats {
   totalCities: number;
@@ -37,7 +39,7 @@ interface Activity {
   icon: React.ReactNode;
 }
 
-const DashboardContent: React.FC = () => {
+const SuperAdminDashboardContent: React.FC = () => {
   const [stats, setStats] = useState<Stats>({
     totalCities: 0,
     totalPOIs: 0,
@@ -413,6 +415,18 @@ const DashboardContent: React.FC = () => {
       </div>
     </>
   );
+};
+
+const DashboardContent: React.FC = () => {
+  const { user } = useAuth();
+  
+  // Si l'utilisateur est un ADMIN (pas SUPER_ADMIN), afficher le dashboard limité
+  if (user?.role === 'ADMIN') {
+    return <AdminDashboardContent />;
+  }
+
+  // Sinon, afficher le dashboard complet pour les SUPER_ADMIN
+  return <SuperAdminDashboardContent />;
 };
 
 export default DashboardContent;

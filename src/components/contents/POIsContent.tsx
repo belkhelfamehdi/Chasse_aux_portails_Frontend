@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { poisAPI } from '../../services/api';
+import { useAuth } from '../../contexts/useAuth';
 import AddPOIModal from '../modals/AddPOIModal';
 import EditPOIModal from '../modals/EditPOIModal';
 import Model3DViewerModal from '../modals/Model3DViewerModal';
 import ConfirmDeleteModal from '../modals/ConfirmDeleteModal';
 import Button from '../Button';
 import Loading from '../Loading';
+import AdminPOIsContent from './AdminPOIsContent';
 
 interface POI {
   id: number;
@@ -35,7 +37,7 @@ interface POIFormData {
   cityId: number;
 }
 
-export default function POIsContent() {
+const SuperAdminPOIsContent = () => {
   const [pois, setPois] = useState<POI[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -367,3 +369,17 @@ export default function POIsContent() {
     </div>
   );
 }
+
+const POIsContent = () => {
+  const { user } = useAuth();
+  
+  // Si l'utilisateur est un ADMIN (pas SUPER_ADMIN), afficher la vue limitée
+  if (user?.role === 'ADMIN') {
+    return <AdminPOIsContent />;
+  }
+
+  // Sinon, afficher la vue complète pour les SUPER_ADMIN
+  return <SuperAdminPOIsContent />;
+};
+
+export default POIsContent;

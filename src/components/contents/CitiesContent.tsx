@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { citiesAPI, type CityData } from '../../services/api';
 import { useNotifications } from '../../contexts/useNotifications';
+import { useAuth } from '../../contexts/useAuth';
 import Button from '../Button';
 import { CitiesEmptyState, ErrorEmptyState } from '../EmptyStates';
 import Loading, { TableSkeleton } from '../Loading';
 import AddCityModal from '../modals/AddCityModal';
 import EditCityModal from '../modals/EditCityModal';
 import ConfirmDeleteModal from '../modals/ConfirmDeleteModal';
+import AdminCitiesContent from './AdminCitiesContent';
 
 interface POI {
   id: number;
@@ -31,7 +33,7 @@ interface City {
 
 type CityFormData = CityData;
 
-const CitiesContent: React.FC = () => {
+const SuperAdminCitiesContent: React.FC = () => {
   const navigate = useNavigate();
   const { success, error } = useNotifications();
   const [cities, setCities] = useState<City[]>([]);
@@ -291,6 +293,18 @@ const CitiesContent: React.FC = () => {
       />
     </div>
   );
+};
+
+const CitiesContent: React.FC = () => {
+  const { user } = useAuth();
+  
+  // Si l'utilisateur est un ADMIN (pas SUPER_ADMIN), afficher la vue limitée
+  if (user?.role === 'ADMIN') {
+    return <AdminCitiesContent />;
+  }
+
+  // Sinon, afficher la vue complète pour les SUPER_ADMIN
+  return <SuperAdminCitiesContent />;
 };
 
 export default CitiesContent;
