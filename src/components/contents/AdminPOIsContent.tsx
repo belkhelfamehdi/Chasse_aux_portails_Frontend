@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import { poisAPI, citiesAPI } from '../../services/api';
-import { useAuth } from '../../contexts/useAuth';
+import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { poisAPI } from '../../services/api';
 import { useNotifications } from '../../contexts/useNotifications';
 import EditPOIModal from '../modals/EditPOIModal';
+import AddPOIModal from '../modals/AddPOIModal';
 import Model3DViewerModal from '../modals/Model3DViewerModal';
 import ConfirmDeleteModal from '../modals/ConfirmDeleteModal';
 import Button from '../Button';
@@ -24,12 +24,6 @@ interface POI {
   };
 }
 
-interface City {
-  id: number;
-  nom: string;
-  adminId?: number;
-}
-
 interface POIFormData {
   nom: string;
   description: string;
@@ -43,10 +37,10 @@ interface POIFormData {
 }
 
 export default function AdminPOIsContent() {
-  const { user } = useAuth();
   const { success, error } = useNotifications();
   const [pois, setPois] = useState<POI[]>([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingPOI, setEditingPOI] = useState<POI | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -59,24 +53,13 @@ export default function AdminPOIsContent() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [poiToDelete, setPOIToDelete] = useState<POI | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [user?.id]);
-
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
       
-      // Charger les villes de l'admin
-      const citiesResponse = await citiesAPI.getAll();
-      const allCities = citiesResponse as City[];
-      const adminCities = allCities.filter(city => city.adminId === user?.id);
-      
-      // Charger tous les POIs et filtrer ceux dans les villes de l'admin
-      const poisResponse = await poisAPI.getAll();
-      const allPOIs = poisResponse as POI[];
-      const adminCityIds = adminCities.map(city => city.id);
-      const adminPOIs = allPOIs.filter(poi => adminCityIds.includes(poi.cityId));
+      // Charger les POIs de l'admin directement via l'API
+      const poisResponse = await poisAPI.getAdminPOIs();
+      const adminPOIs = poisResponse as POI[];
       
       setPois(adminPOIs);
     } catch (err) {
@@ -85,7 +68,11 @@ export default function AdminPOIsContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id, error]);
+  }, [error]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleEditPOI = (poi: POI) => {
     setEditingPOI(poi);
@@ -97,12 +84,37 @@ export default function AdminPOIsContent() {
     setEditingPOI(null);
   };
 
+  const handleAddPOI = () => {
+    setIsAddModalOpen(true);
+  };
+
+  const handleCloseAddModal = () => {
+    setIsAddModalOpen(false);
+  };
+
+  const handleCreatePOI = async (poiData: POIFormData) => {
+    if (!poiData.nom) return;
+    
+    try {
+      setIsSubmitting(true);
+      const newPOI = await poisAPI.createAsAdmin(poiData);
+      setPois(prev => [...prev, newPOI as POI]);
+      success('Point d\'intérêt créé avec succès');
+      handleCloseAddModal();
+    } catch (err) {
+      console.error('Error creating POI:', err);
+      error('Erreur lors de la création du point d\'intérêt');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleUpdatePOI = async (poiData: Partial<POIFormData>) => {
     if (!editingPOI || !poiData.nom) return;
     
     try {
       setIsSubmitting(true);
-      const updatedPOI = await poisAPI.update(editingPOI.id, poiData as POIFormData);
+      const updatedPOI = await poisAPI.updateAsAdmin(editingPOI.id, poiData as POIFormData);
       setPois(prev => prev.map(poi => 
         poi.id === editingPOI.id ? { ...poi, ...updatedPOI as POI } : poi
       ));
@@ -141,7 +153,7 @@ export default function AdminPOIsContent() {
     
     try {
       setIsDeleting(poiToDelete.id);
-      await poisAPI.delete(poiToDelete.id);
+      await poisAPI.deleteAsAdmin(poiToDelete.id);
       setPois(prev => prev.filter(poi => poi.id !== poiToDelete.id));
       success('Point d\'intérêt supprimé avec succès');
       handleCloseDeleteModal();
@@ -181,6 +193,13 @@ export default function AdminPOIsContent() {
           <h2 className="text-2xl font-bold text-gray-900">Mes Points d'Intérêt</h2>
           <p className="text-gray-600">Gérez les points d'intérêt dans vos villes</p>
         </div>
+        <button
+          onClick={handleAddPOI}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
+        >
+          <PlusIcon className="h-4 w-4 mr-2" />
+          Ajouter un POI
+        </button>
       </div>
 
       {/* Search */}
@@ -299,6 +318,17 @@ export default function AdminPOIsContent() {
           initialPOI={editingPOI}
           onSubmit={handleUpdatePOI}
           isLoading={isSubmitting}
+        />
+      )}
+
+      {/* Add Modal */}
+      {isAddModalOpen && (
+        <AddPOIModal
+          isOpen={isAddModalOpen}
+          onClose={handleCloseAddModal}
+          onSubmit={handleCreatePOI}
+          isLoading={isSubmitting}
+          isAdminMode={true}
         />
       )}
 

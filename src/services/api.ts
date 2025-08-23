@@ -274,6 +274,9 @@ export const citiesAPI = {
     /** Get all cities. */
     getAll: () => apiRequest('/cities'),
 
+    /** Get cities assigned to the current admin. */
+    getAdminCities: () => apiRequest('/cities/admin'),
+
     /** Get a city by id. */
     getById: (id: number) => apiRequest(`/cities/${id}`),
 
@@ -285,6 +288,10 @@ export const citiesAPI = {
     update: (id: number, cityData: Partial<CityData>) =>
         apiRequest(`/cities/${id}`, { method: 'PUT', body: JSON.stringify(cityData) }),
 
+    /** Update a city by id as admin (limited permissions). */
+    updateAsAdmin: (id: number, cityData: Partial<CityData>) =>
+        apiRequest(`/cities/admin/${id}`, { method: 'PUT', body: JSON.stringify(cityData) }),
+
     /** Delete a city by id. */
     delete: (id: number) => apiRequest(`/cities/${id}`, { method: 'DELETE' }),
 };
@@ -293,6 +300,9 @@ export const citiesAPI = {
 export const poisAPI = {
     /** Get all POIs. */
     getAll: () => apiRequest('/pois'),
+
+    /** Get POIs assigned to the current admin. */
+    getAdminPOIs: () => apiRequest('/pois/admin'),
 
     /** Get POIs by city id. */
     getByCity: (cityId: number) => apiRequest(`/pois/city/${cityId}`),
@@ -339,6 +349,48 @@ export const poisAPI = {
         }
     },
 
+    /** Create a POI as admin with file upload support for icons and 3D models. */
+    createAsAdmin: (poiData: POIData) => {
+        // Check if we have files to upload
+        const hasFiles = poiData.iconFile || poiData.modelFile;
+        
+        if (hasFiles) {
+            // Use multipart form data for file uploads
+            const formData = new FormData();
+            formData.append('nom', poiData.nom);
+            formData.append('description', poiData.description);
+            formData.append('latitude', poiData.latitude.toString());
+            formData.append('longitude', poiData.longitude.toString());
+            formData.append('cityId', poiData.cityId.toString());
+            
+            if (poiData.iconFile) {
+                formData.append('iconFile', poiData.iconFile);
+            } else if (poiData.iconUrl) {
+                formData.append('iconUrl', poiData.iconUrl);
+            }
+            
+            if (poiData.modelFile) {
+                formData.append('modelFile', poiData.modelFile);
+            } else if (poiData.modelUrl) {
+                formData.append('modelUrl', poiData.modelUrl);
+            }
+            
+            return apiFormDataRequest('/pois/admin/create', formData, 'POST');
+        } else {
+            // Use JSON for URL-only POIs
+            const payload = filterUndefined({
+                nom: poiData.nom,
+                description: poiData.description,
+                latitude: poiData.latitude,
+                longitude: poiData.longitude,
+                cityId: poiData.cityId,
+                iconUrl: trimOrUndefined(poiData.iconUrl),
+                modelUrl: trimOrUndefined(poiData.modelUrl),
+            });
+            return apiRequest('/pois/admin/create', { method: 'POST', body: JSON.stringify(payload) });
+        }
+    },
+
     /** Update a POI by id (JSON only). */
     update: (id: number, poiData: Partial<POIData>) => {
         const payload = filterUndefined({
@@ -353,8 +405,25 @@ export const poisAPI = {
         return apiRequest(`/pois/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
     },
 
+    /** Update a POI by id as admin (JSON only). */
+    updateAsAdmin: (id: number, poiData: Partial<POIData>) => {
+        const payload = filterUndefined({
+            nom: poiData.nom,
+            description: poiData.description,
+            latitude: poiData.latitude,
+            longitude: poiData.longitude,
+            cityId: poiData.cityId,
+            iconUrl: poiData.iconUrl,
+            modelUrl: poiData.modelUrl,
+        });
+        return apiRequest(`/pois/admin/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    },
+
     /** Delete a POI by id. */
     delete: (id: number) => apiRequest(`/pois/${id}`, { method: 'DELETE' }),
+
+    /** Delete a POI by id as admin. */
+    deleteAsAdmin: (id: number) => apiRequest(`/pois/admin/${id}`, { method: 'DELETE' }),
 };
 
 /** Admins endpoints */

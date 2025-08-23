@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ProfilePictureUpload from '../inputs/ProfilePictureUpload';
 import FileUpload from '../inputs/FileUpload';
 import { TextInput, TextArea, Dropdown } from '../inputs';
@@ -11,6 +11,7 @@ interface AddPOIModalProps {
     onClose: () => void;
     onSubmit: (data: POIFormData) => void | Promise<void>;
     isLoading?: boolean;
+    isAdminMode?: boolean;
 }
 
 interface POIFormData {
@@ -30,7 +31,7 @@ interface City {
     nom: string;
 }
 
-const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, isLoading = false }) => {
+const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, isLoading = false, isAdminMode = false }) => {
     const [formData, setFormData] = useState({
         nom: '',
         description: '',
@@ -45,17 +46,12 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, is
     const [cities, setCities] = useState<City[]>([]);
     const [loadingCities, setLoadingCities] = useState(false);
 
-    // Load cities when modal opens
-    useEffect(() => {
-        if (isOpen) {
-            loadCities();
-        }
-    }, [isOpen]);
-
-    const loadCities = async () => {
+    const loadCities = useCallback(async () => {
         try {
             setLoadingCities(true);
-            const response = await citiesAPI.getAll();
+            const response = isAdminMode 
+                ? await citiesAPI.getAdminCities()
+                : await citiesAPI.getAll();
             setCities(response as City[]);
         } catch (error) {
             console.error('Error loading cities:', error);
@@ -63,7 +59,14 @@ const AddPOIModal: React.FC<AddPOIModalProps> = ({ isOpen, onClose, onSubmit, is
         } finally {
             setLoadingCities(false);
         }
-    };
+    }, [isAdminMode]);
+
+    // Load cities when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            loadCities();
+        }
+    }, [isOpen, loadCities]);
 
     const handleSubmit = async () => {
         const poiData: POIFormData = {

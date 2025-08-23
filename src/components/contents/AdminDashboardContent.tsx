@@ -52,39 +52,7 @@ const AdminDashboardContent: React.FC = () => {
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
   const [isLoadingActivities, setIsLoadingActivities] = useState(true);
 
-  const loadAdminData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      
-      // Charger toutes les villes
-      const citiesResponse = await citiesAPI.getAll();
-      const allCities = citiesResponse as City[];
-      
-      // Filtrer les villes gérées par cet admin
-      const adminCities = allCities.filter(city => city.adminId === user?.id);
-      setMyCities(adminCities);
-      
-      // Charger tous les POIs
-      const poisResponse = await poisAPI.getAll();
-      const allPOIs = poisResponse as POI[];
-      
-      // Filtrer les POIs dans les villes de cet admin
-      const adminCityIds = adminCities.map(city => parseInt(city.id));
-      const adminPOIs = allPOIs.filter(poi => adminCityIds.includes(poi.cityId));
-      
-      setStats({
-        myCities: adminCities.length,
-        myPOIs: adminPOIs.length
-      });
-      
-    } catch (error) {
-      console.error('Error loading admin data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user?.id]);
-
-  const generateAdminActivities = useCallback(async () => {
+  const generateActivitiesForCities = useCallback((cities: City[]) => {
     try {
       setIsLoadingActivities(true);
       
@@ -92,8 +60,8 @@ const AdminDashboardContent: React.FC = () => {
       const activities: Activity[] = [];
       
       // Activités simulées basées sur les villes de l'admin
-      if (myCities.length > 0) {
-        myCities.slice(0, 3).forEach((city, index) => {
+      if (cities.length > 0) {
+        cities.slice(0, 3).forEach((city, index) => {
           activities.push({
             id: `city-update-${city.id}-${index}`,
             type: 'city_updated',
@@ -116,7 +84,7 @@ const AdminDashboardContent: React.FC = () => {
       }
       
       // Trier par timestamp décroissant
-      const sortedActivities = activities
+      const sortedActivities = [...activities]
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
         .slice(0, 5);
       
@@ -127,12 +95,39 @@ const AdminDashboardContent: React.FC = () => {
     } finally {
       setIsLoadingActivities(false);
     }
-  }, [myCities]);
+  }, []);
+
+  const loadAdminData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      
+      // Charger les villes de l'admin directement
+      const citiesResponse = await citiesAPI.getAdminCities();
+      const adminCities = citiesResponse as City[];
+      setMyCities(adminCities);
+      
+      // Charger les POIs de l'admin directement
+      const poisResponse = await poisAPI.getAdminPOIs();
+      const adminPOIs = poisResponse as POI[];
+      
+      setStats({
+        myCities: adminCities.length,
+        myPOIs: adminPOIs.length
+      });
+
+      // Générer les activités directement ici avec les données fraîches
+      generateActivitiesForCities(adminCities);
+      
+    } catch (error) {
+      console.error('Error loading admin data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [generateActivitiesForCities]);
 
   useEffect(() => {
     loadAdminData();
-    generateAdminActivities();
-  }, [user?.id, loadAdminData, generateAdminActivities]);
+  }, [user?.id, loadAdminData]);
 
   const formatTimeAgo = (timestamp: string) => {
     const now = new Date();
@@ -169,13 +164,11 @@ const AdminDashboardContent: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Mes Villes</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {isLoading ? (
-                  <div className="animate-pulse bg-gray-200 h-8 w-12 rounded"></div>
-                ) : (
-                  stats.myCities
-                )}
-              </p>
+              {isLoading ? (
+                <div className="animate-pulse bg-gray-200 h-8 w-12 rounded"></div>
+              ) : (
+                <p className="text-2xl font-bold text-gray-900">{stats.myCities}</p>
+              )}
             </div>
           </div>
         </div>
@@ -187,13 +180,11 @@ const AdminDashboardContent: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Mes Points d'Intérêt</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {isLoading ? (
-                  <div className="animate-pulse bg-gray-200 h-8 w-12 rounded"></div>
-                ) : (
-                  stats.myPOIs
-                )}
-              </p>
+              {isLoading ? (
+                <div className="animate-pulse bg-gray-200 h-8 w-12 rounded"></div>
+              ) : (
+                <p className="text-2xl font-bold text-gray-900">{stats.myPOIs}</p>
+              )}
             </div>
           </div>
         </div>

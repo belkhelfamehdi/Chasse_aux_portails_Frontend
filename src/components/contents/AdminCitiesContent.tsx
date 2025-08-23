@@ -41,22 +41,12 @@ const AdminCitiesContent: React.FC = () => {
   const [hasError, setHasError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (user?.id) {
-      loadCities();
-    }
-  }, [user?.id]);
-
   const loadCities = useCallback(async () => {
+    setIsLoading(true);
+    setHasError(false);
     try {
-      setIsLoading(true);
-      setHasError(false);
-      const response = await citiesAPI.getAll();
-      const allCities = response as City[];
-      
-      // Filtrer pour ne montrer que les villes gérées par cet admin
-      const myCities = allCities.filter(city => city.adminId === user?.id);
-      setCities(myCities);
+      const data = await citiesAPI.getAdminCities();
+      setCities(data as City[]);
     } catch (err) {
       console.error('Error loading cities:', err);
       setHasError(true);
@@ -64,7 +54,13 @@ const AdminCitiesContent: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id, error]);
+  }, [error]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadCities();
+    }
+  }, [user?.id, loadCities]);
 
   const handleEditCity = (city: City) => {
     setEditingCity(city);
@@ -81,7 +77,7 @@ const AdminCitiesContent: React.FC = () => {
     
     try {
       setIsSubmitting(true);
-      const updatedCity = await citiesAPI.update(editingCity.id, cityData as CityFormData);
+      const updatedCity = await citiesAPI.updateAsAdmin(editingCity.id, cityData as CityFormData);
       setCities(prev => prev.map(city => 
         city.id === editingCity.id ? { ...city, ...updatedCity as City } : city
       ));
