@@ -122,8 +122,8 @@ const AdminCitiesContent: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Mes Villes</h2>
-          <p className="text-gray-600">Gérez les villes qui vous sont assignées</p>
+          <h2 className="text-2xl font-bold text-ynov-primary font-montserrat">Mes Villes</h2>
+          <p className="text-ynov-secondary font-source-sans">Gérez les villes qui vous sont assignées</p>
         </div>
       </div>
 
@@ -131,21 +131,21 @@ const AdminCitiesContent: React.FC = () => {
       {cities.length === 0 ? (
         <CitiesEmptyState />
       ) : (
-        <div className="bg-white shadow-sm rounded-lg border border-gray-200">
+        <div className="bg-white shadow-sm rounded-xl border border-gray-200">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-ynov-primary uppercase tracking-wider font-source-sans">
                     Ville
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-ynov-primary uppercase tracking-wider font-source-sans">
                     Coordonnées
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-ynov-primary uppercase tracking-wider font-source-sans">
                     Rayon (km)
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-ynov-primary uppercase tracking-wider font-source-sans">
                     Points d'Intérêt
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">

@@ -199,16 +199,16 @@ const SuperAdminDashboardContent: React.FC = () => {
     <>
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-6 mb-8 md:grid-cols-3">
-        <div className="p-6 bg-white rounded-lg shadow-sm">
+        <div className="p-6 bg-white rounded-xl shadow-sm">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <div className="flex items-center justify-center w-8 h-8 rounded-lg">
-                <MapIcon className="h-auto w-7 text-primary" />
+                <MapIcon className="h-auto w-7 text-ynov-secondary" />
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Total des Villes</p>
-              <p className="text-xl font-semibold text-gray-900">
+              <p className="text-sm font-medium text-gray-500 font-source-sans">Total des Villes</p>
+              <p className="text-xl font-semibold text-ynov-primary font-montserrat">
                 {isLoading ? (
                   <span className="inline-flex items-center">
                     <svg className="w-4 h-4 animate-spin mr-1" fill="none" viewBox="0 0 24 24">
@@ -223,16 +223,16 @@ const SuperAdminDashboardContent: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-6 bg-white rounded-lg shadow-sm">
+        <div className="p-6 bg-white rounded-xl shadow-sm">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <div className="flex items-center justify-center w-8 h-8 rounded-lg">
-                <MapPinIcon className="h-auto w-7 text-primary" />
+                <MapPinIcon className="h-auto w-7 text-ynov-secondary" />
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Total Points d'Intérêt</p>
-              <p className="text-xl font-semibold text-gray-900">
+              <p className="text-sm font-medium text-gray-500 font-source-sans">Total Points d'Intérêt</p>
+              <p className="text-xl font-semibold text-ynov-primary font-montserrat">
                 {isLoading ? (
                   <span className="inline-flex items-center">
                     <svg className="w-4 h-4 animate-spin mr-1" fill="none" viewBox="0 0 24 24">
@@ -247,16 +247,16 @@ const SuperAdminDashboardContent: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-6 bg-white rounded-lg shadow-sm">
+        <div className="p-6 bg-white rounded-xl shadow-sm">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <div className="flex items-center justify-center w-8 h-8 rounded-lg">
-                <UsersIcon className="h-auto w-7 text-primary" />
+                <UsersIcon className="h-auto w-7 text-ynov-secondary" />
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Administrateurs</p>
-              <p className="text-xl font-semibold text-gray-900">
+              <p className="text-sm font-medium text-gray-500 font-source-sans">Administrateurs</p>
+              <p className="text-xl font-semibold text-ynov-primary font-montserrat">
                 {isLoading ? (
                   <span className="inline-flex items-center">
                     <svg className="w-4 h-4 animate-spin mr-1" fill="none" viewBox="0 0 24 24">
@@ -275,9 +275,9 @@ const SuperAdminDashboardContent: React.FC = () => {
       {/* Content Grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Recent Activities */}
-        <div className="bg-white rounded-lg shadow-md">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Activités récentes</h3>
+            <h3 className="text-lg font-montserrat font-semibold text-ynov-primary">Activités récentes</h3>
           </div>
           <div className="p-6">
             {isLoadingActivities ? (
@@ -333,9 +333,9 @@ const SuperAdminDashboardContent: React.FC = () => {
         </div>
 
         {/* Active Admins */}
-        <div className="bg-white rounded-lg shadow-md">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Administrateurs Actifs</h3>
+            <h3 className="text-lg font-montserrat font-semibold text-ynov-primary">Administrateurs Actifs</h3>
           </div>
           <div className="p-6">
             {isLoadingAdmins ? (

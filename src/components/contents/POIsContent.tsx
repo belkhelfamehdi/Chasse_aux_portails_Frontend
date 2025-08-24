@@ -197,7 +197,7 @@ const SuperAdminPOIsContent = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Points d'Intérêt</h1>
+          <h1 className="text-2xl font-bold text-ynov-primary font-montserrat">Points d'Intérêt</h1>
           <p className="text-sm text-primary">Gérer les points d'intérêt pour la ville sélectionnée.</p>
         </div>
       </div>
@@ -212,7 +212,7 @@ const SuperAdminPOIsContent = () => {
               placeholder="Rechercher des points d'intérêt"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full py-2 pl-10 pr-3 text-sm text-gray-700 placeholder-gray-400 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              className="w-full py-2 pl-10 pr-3 text-sm text-gray-700 placeholder-gray-400 border border-gray-200 rounded-xl focus:outline-none focus:border-ynov-secondary focus:ring-1 focus:ring-ynov-secondary font-source-sans"
             />
           </div>
         </div>
@@ -224,7 +224,7 @@ const SuperAdminPOIsContent = () => {
       </div>
 
       {/* POI Table */}
-      <div className="overflow-hidden bg-white border border-gray-200 rounded-lg">
+      <div className="overflow-hidden bg-white border border-gray-200 rounded-xl shadow-sm">
         <table className="min-w-full">
           <thead className="border-b border-gray-200 bg-gray-50">
             <tr>
@@ -286,7 +286,7 @@ const SuperAdminPOIsContent = () => {
                       <div className="flex flex-col items-center space-y-1">
                         <button
                           onClick={() => open3DViewer(poi)}
-                          className="flex items-center justify-center w-10 h-10 bg-blue-100 border border-blue-200 rounded-lg hover:bg-blue-200 transition-colors cursor-pointer"
+                          className="flex items-center justify-center w-10 h-10 bg-ynov-secondary/10 border border-ynov-secondary/20 rounded-lg hover:bg-ynov-secondary hover:border-ynov-secondary transition-colors cursor-pointer group"
                           title={`Voir le modèle 3D: ${poi.modelUrl}`}
                         >
                           <div className="w-5 h-5 bg-blue-500 rounded transform rotate-12"></div>

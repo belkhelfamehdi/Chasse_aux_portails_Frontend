@@ -182,8 +182,8 @@ const SuperAdminCitiesContent: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestion des villes</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-ynov-primary font-montserrat">Gestion des villes</h1>
+          <p className="text-ynov-secondary mt-1 font-source-sans">
             {getSubtitleText()}
           </p>
         </div>
@@ -197,20 +197,20 @@ const SuperAdminCitiesContent: React.FC = () => {
       {cities.length === 0 ? (
         <CitiesEmptyState onAction={() => setIsAddModalOpen(true)} />
       ) : (
-        <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm">
+        <div className="overflow-hidden bg-white border border-gray-200 rounded-xl shadow-sm">
           <table className="min-w-full">
             <thead className="border-b border-gray-200 bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-sm font-medium text-left text-gray-500">
+                <th className="px-6 py-3 text-sm font-medium text-left text-ynov-primary font-source-sans">
                   Nom
                 </th>
-                <th className="px-6 py-3 text-sm font-medium text-left text-gray-500">
+                <th className="px-6 py-3 text-sm font-medium text-left text-ynov-primary font-source-sans">
                   Coordonnées
                 </th>
-                <th className="px-6 py-3 text-sm font-medium text-left text-gray-500">
+                <th className="px-6 py-3 text-sm font-medium text-left text-ynov-primary font-source-sans">
                   Rayon
                 </th>
-                <th className="px-6 py-3 text-sm font-medium text-right text-gray-500">
+                <th className="px-6 py-3 text-sm font-medium text-right text-ynov-primary font-source-sans">
                   Actions
                 </th>
               </tr>
@@ -218,19 +218,19 @@ const SuperAdminCitiesContent: React.FC = () => {
             <tbody className="divide-y divide-gray-200">
               {cities.map((city) => (
                 <tr key={city.id} className="hover:bg-gray-50 transition-colors duration-150">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                  <td className="px-6 py-4 text-sm font-medium text-ynov-primary font-source-sans">
                     <button
                       onClick={() => navigate(`/cities/${city.id}`)}
-                      className="text-primary hover:text-primary-light underline font-medium cursor-pointer transition-colors duration-150"
+                      className="text-ynov-secondary hover:text-primary underline font-medium cursor-pointer transition-colors duration-150"
                       title={`Voir les détails de ${city.nom}`}
                     >
                       {city.nom}
                     </button>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
+                  <td className="px-6 py-4 text-sm text-gray-600 font-source-sans">
                     {formatCoordinates(city.latitude, city.longitude)}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
+                  <td className="px-6 py-4 text-sm text-gray-600 font-source-sans">
                     {city.rayon} km
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -238,16 +238,16 @@ const SuperAdminCitiesContent: React.FC = () => {
                       <button
                         title="Modifier"
                         onClick={() => openEdit(city)}
-                        className="text-primary hover:text-primary-light font-semibold transition-colors duration-150 cursor-pointer"
+                        className="text-ynov-secondary hover:text-blue-600 font-semibold transition-colors duration-150 cursor-pointer font-source-sans"
                       >
                         <span className="text-sm">Modifier</span>
                       </button>
-                      <span className="text-gray-300 font-semibold">|</span>
+                      <span className="text-ynov-secondary font-semibold">|</span>
                       <button
                         title="Supprimer"
                         onClick={() => handleDeleteCity(city)}
                         disabled={isDeleting === city.id}
-                        className="text-red-600 hover:text-red-700 font-semibold transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="text-ynov-secondary hover:text-red-600 font-semibold transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-source-sans"
                       >
                         {isDeleting === city.id ? (
                           <Loading size="sm" />

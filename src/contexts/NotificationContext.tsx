@@ -88,7 +88,7 @@ const NotificationContainer: React.FC<{
     onRemove: (id: string) => void;
 }> = ({ notifications, onRemove }) => {
     return (
-        <div className="fixed top-4 right-4 z-50 space-y-3 max-w-md">
+        <div className="fixed top-4 right-4 z-50 space-y-3 w-96">
             {notifications.map((notification) => (
                 <NotificationCard
                     key={notification.id}
@@ -132,7 +132,7 @@ const NotificationCard: React.FC<{
 
     return (
         <div
-            className={`notification-enter pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg border shadow-lg ${getBackgroundColor()}`}
+            className={`notification-enter pointer-events-auto w-full overflow-hidden rounded-xl border shadow-sm ${getBackgroundColor()}`}
         >
             <div className="p-4">
                 <div className="flex items-start">

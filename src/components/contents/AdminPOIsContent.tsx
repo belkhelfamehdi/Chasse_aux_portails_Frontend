@@ -190,12 +190,12 @@ export default function AdminPOIsContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Mes Points d'Intérêt</h2>
-          <p className="text-gray-600">Gérez les points d'intérêt dans vos villes</p>
+          <h2 className="text-2xl font-bold text-ynov-primary font-montserrat">Mes Points d'Intérêt</h2>
+          <p className="text-ynov-secondary font-source-sans">Gérez les points d'intérêt dans vos villes</p>
         </div>
         <button
           onClick={handleAddPOI}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-ynov-secondary hover:bg-ynov-secondary/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ynov-secondary transition-colors font-source-sans"
         >
           <PlusIcon className="h-4 w-4 mr-2" />
           Ajouter un POI
@@ -211,7 +211,7 @@ export default function AdminPOIsContent() {
             placeholder="Rechercher un point d'intérêt..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="pl-10 pr-4 py-2 w-full border border-gray-200 rounded-xl focus:ring-ynov-secondary focus:border-transparent font-source-sans"
           />
         </div>
       )}
@@ -231,24 +231,24 @@ export default function AdminPOIsContent() {
           </p>
         </div>
       ) : (
-        <div className="bg-white shadow-sm rounded-lg border border-gray-200">
+        <div className="bg-white shadow-sm rounded-xl border border-gray-200">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-ynov-primary uppercase tracking-wider font-source-sans">
                     Point d'Intérêt
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-ynov-primary uppercase tracking-wider font-source-sans">
                     Ville
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-ynov-primary uppercase tracking-wider font-source-sans">
                     Coordonnées
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-ynov-primary uppercase tracking-wider font-source-sans">
                     Média
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-ynov-primary uppercase tracking-wider font-source-sans">
                     Actions
                   </th>
                 </tr>
@@ -258,11 +258,11 @@ export default function AdminPOIsContent() {
                   <tr key={poi.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{poi.nom}</div>
-                        <div className="text-sm text-gray-500 truncate max-w-xs">{poi.description}</div>
+                        <div className="text-sm font-medium text-ynov-primary font-source-sans">{poi.nom}</div>
+                        <div className="text-sm text-gray-500 truncate max-w-xs font-source-sans">{poi.description}</div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-ynov-primary font-source-sans">
                       {poi.city?.nom}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

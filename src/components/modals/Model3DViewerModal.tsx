@@ -98,14 +98,19 @@ export default function Model3DViewerModal({ isOpen, onClose, modelUrl, modelNam
             let mtlMaterials: Map<string, THREE.Material> = new Map();
             const mtlUrl = url.replace('.obj', '.mtl');
             
+            // Check if MTL file exists first with a HEAD request to avoid 404 console errors
             try {
-                const mtlResponse = await fetch(mtlUrl);
-                if (mtlResponse.ok) {
-                    const mtlText = await mtlResponse.text();
-                    mtlMaterials = await parseMTL(mtlText, url);
+                const mtlHeadResponse = await fetch(mtlUrl, { method: 'HEAD' });
+                if (mtlHeadResponse.ok) {
+                    const mtlResponse = await fetch(mtlUrl);
+                    if (mtlResponse.ok) {
+                        const mtlText = await mtlResponse.text();
+                        mtlMaterials = await parseMTL(mtlText, url);
+                    }
                 }
             } catch {
                 // MTL file not found or invalid, use default materials
+                console.debug('MTL file not found for model, using default materials');
             }
             
             const lines = objText.split('\n');

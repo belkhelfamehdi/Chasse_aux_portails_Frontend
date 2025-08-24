@@ -161,8 +161,8 @@ export default function AdminsContent() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Administrateurs</h1>
-          <p className="text-sm text-primary">Gérer les administrateurs</p>
+          <h1 className="text-2xl font-bold text-ynov-primary font-montserrat">Administrateurs</h1>
+          <p className="text-sm text-ynov-secondary font-source-sans">Gérer les administrateurs</p>
         </div>
       </div>
 
@@ -171,13 +171,13 @@ export default function AdminsContent() {
         <div className="w-full">
           <div className="relative max-w-md">
             <MagnifyingGlassIcon className="absolute w-4 h-4 text-gray-400 left-3 top-3" />
-            <input
-              type="text"
-              placeholder="Recherchez un administrateur"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50"
-            />
+          <input
+            type="text"
+            placeholder="Recherchez un administrateur"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 pr-4 py-2 w-full border border-gray-200 rounded-xl focus:border-transparent font-source-sans"
+          />
           </div>
         </div>
         <Button
@@ -188,17 +188,17 @@ export default function AdminsContent() {
       </div>
 
       {/* Admin Table */}
-      <div className="overflow-hidden bg-white border border-gray-200 rounded-lg">
+      <div className="overflow-hidden bg-white border border-gray-200 rounded-xl shadow-sm">
         <table className="min-w-full">
           <thead className="border-b border-gray-200 bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-sm font-medium text-left text-gray-500">
+              <th className="px-6 py-3 text-sm font-medium text-left text-ynov-primary font-source-sans">
                 Nom
               </th>
-              <th className="px-6 py-3 text-sm font-medium text-left text-gray-500">
+              <th className="px-6 py-3 text-sm font-medium text-left text-ynov-primary font-source-sans">
                 Email
               </th>
-              <th className="px-6 py-3 text-sm font-medium text-right text-gray-500">
+              <th className="px-6 py-3 text-sm font-medium text-right text-ynov-primary font-source-sans">
                 Actions
               </th>
             </tr>
@@ -206,7 +206,7 @@ export default function AdminsContent() {
           <tbody className="divide-y divide-gray-200">
             {filteredAdmins.length === 0 ? (
               <tr>
-                <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
+                <td colSpan={3} className="px-6 py-12 text-center text-gray-500 font-source-sans">
                   Aucun administrateur trouvé.
                 </td>
               </tr>

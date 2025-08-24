@@ -1,9 +1,11 @@
 /**
  * API client utilities and typed endpoints for the frontend.
  * - Centralizes token handling (read/write, refresh, and propagation).
- * - Provides JSON and multipart helpers.
+ * - Provides JSON and multipart helpers using Axios.
  * - Includes JSDoc to generate documentation.
  */
+
+import axios from 'axios';
 
 // Base configuration
 /**
@@ -11,6 +13,15 @@
  * Reads from VITE_API_URL and falls back to http://localhost:3000/api
  */
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+// Configure Axios defaults
+const apiClient = axios.create({
+    baseURL: API_BASE_URL,
+    withCredentials: true,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
 
 // =========================
 // Types
@@ -107,116 +118,88 @@ function clearAuthAndRedirect() {
     window.location.href = '/login';
 }
 
-/** Returns true when the response indicates an auth failure that might be recoverable. */
-function isAuthError(res: Response) {
-    return res.status === 401 || res.status === 403;
-}
+// =========================
+// Axios Interceptors
+// =========================
 
-/** Try to parse an error body as JSON; fall back to text. */
-async function parseErrorMessage(res: Response): Promise<string> {
-    try {
-        const data = await res.clone().json();
-        if (data && typeof data === 'object') {
-            const apiError = data as Partial<ApiError>;
-            return apiError.error || `HTTP error ${res.status}`;
+// Request interceptor to add token to headers
+apiClient.interceptors.request.use(
+    (config) => {
+        const token = getStoredToken();
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
         }
-    } catch {
-        // ignore and fall back to text
-    }
-    try {
-        const text = await res.text();
-        return text || `HTTP error ${res.status}`;
-    } catch {
-        return `HTTP error ${res.status}`;
-    }
-}
+        return config;
+    },
+    (error) => Promise.reject(new Error(error.message || 'Request error'))
+);
 
-/** Throw a descriptive Error for a non-OK response. */
-async function throwFromResponse(res: Response): Promise<never> {
-    throw new Error(await parseErrorMessage(res));
-}
-
-/** Performs a refresh token flow; returns true if a new token is stored. */
-async function refreshAccessToken(): Promise<boolean> {
-    const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: 'POST',
-        credentials: 'include',
-    });
-    if (!res.ok) return false;
-    const data = (await res.json()) as { accessToken: string; user?: User };
-    if (!data?.accessToken) return false;
-    setStoredAuth(data.accessToken, data.user);
-    return true;
-}
-
-/**
- * Execute a request with the current token and retry once after refresh on 401/403.
- * Keeps complexity low by centralizing the refresh logic.
- */
-async function withAuthFetch(getRequest: (token: string | null) => Promise<Response>): Promise<Response> {
-    const token = getStoredToken();
-    let response = await getRequest(token);
-    if (isAuthError(response) && token) {
-        const refreshed = await refreshAccessToken();
-        if (!refreshed) {
-            clearAuthAndRedirect();
-            throw new Error('Session expired. Please login again.');
+// Response interceptor to handle token refresh
+apiClient.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config;
+        
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
+            
+            try {
+                const refreshResponse = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, {
+                    withCredentials: true,
+                });
+                
+                const { accessToken, user } = refreshResponse.data;
+                setStoredAuth(accessToken, user);
+                
+                // Retry original request with new token
+                originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+                return apiClient(originalRequest);
+            } catch {
+                clearAuthAndRedirect();
+                return Promise.reject(new Error('Session expired. Please login again.'));
+            }
         }
-        const newToken = getStoredToken();
-        response = await getRequest(newToken);
+        
+        return Promise.reject(new Error(error.message || 'An error occurred'));
     }
-    return response;
-}
+);
 
 // =========================
 // Public HTTP helpers
 // =========================
 
 /**
- * Generic JSON API request helper.
- * - Attaches Authorization header if an access token is present.
- * - On 401/403, auto-attempts a refresh then retries once.
+ * Generic JSON API request helper using Axios.
+ * - Automatically attaches Authorization header if an access token is present.
+ * - On 401, auto-attempts a refresh then retries once.
  *
  * @template T Expected JSON response type
  * @param endpoint API endpoint, e.g. "/cities"
- * @param options fetch options (method, body, headers, ...)
+ * @param options Axios request config
  */
-async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
-    const getRequest = (accessToken: string | null) => {
-        const headers: Record<string, string> = {
-            'Content-Type': 'application/json',
-            ...(options.headers as Record<string, string>),
-        };
-        if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
-        const config: RequestInit = {
-            credentials: 'include',
+async function apiRequest<T>(endpoint: string, options: Record<string, unknown> = {}): Promise<T> {
+    try {
+        const response = await apiClient({
+            url: endpoint,
             ...options,
-            headers,
-        };
-        return fetch(url, config);
-    };
-
-    const response = await withAuthFetch(getRequest);
-    if (!response.ok) await throwFromResponse(response);
-    
-    // Pour les réponses 204 (No Content), ne pas essayer de parser en JSON
-    if (response.status === 204) {
-        return {} as T;
+        });
+        return response.data;
+    } catch (error: unknown) {
+        if (error && typeof error === 'object' && 'response' in error) {
+            const axiosError = error as { response?: { data?: { error?: string } } };
+            if (axiosError.response?.data?.error) {
+                throw new Error(axiosError.response.data.error);
+            }
+        }
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error('An error occurred');
     }
-    
-    // Vérifier s'il y a un contenu à parser
-    const contentType = response.headers.get('content-type');
-    if (contentType?.includes('application/json')) {
-        return response.json() as Promise<T>;
-    }
-    
-    // Si pas de contenu JSON, retourner un objet vide
-    return {} as T;
 }
 
 /**
- * API request helper for multipart/form-data uploads.
+ * API request helper for multipart/form-data uploads using Axios.
  * Automatically adds Authorization header when available.
  *
  * @template T Expected JSON response type
@@ -229,22 +212,28 @@ async function apiFormDataRequest<T>(
     formData: FormData,
     method: 'POST' | 'PUT' = 'POST'
 ): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
-    const getRequest = (accessToken: string | null) => {
-        const headers: Record<string, string> = {};
-        if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
-        const config: RequestInit = {
+    try {
+        const response = await apiClient({
+            url: endpoint,
             method,
-            credentials: 'include',
-            headers,
-            body: formData,
-        };
-        return fetch(url, config);
-    };
-
-    const response = await withAuthFetch(getRequest);
-    if (!response.ok) await throwFromResponse(response);
-    return response.json() as Promise<T>;
+            data: formData,
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    } catch (error: unknown) {
+        if (error && typeof error === 'object' && 'response' in error) {
+            const axiosError = error as { response?: { data?: { error?: string } } };
+            if (axiosError.response?.data?.error) {
+                throw new Error(axiosError.response.data.error);
+            }
+        }
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error('An error occurred');
+    }
 }
 
 // =========================
@@ -257,7 +246,7 @@ export const authAPI = {
     login: (email: string, password: string): Promise<LoginResponse> =>
         apiRequest<LoginResponse>('/auth/login', {
             method: 'POST',
-            body: JSON.stringify({ email, password }),
+            data: { email, password },
         }),
 
     /** Logout current session. */
@@ -282,15 +271,15 @@ export const citiesAPI = {
 
     /** Create a city. */
     create: (cityData: CityData) =>
-        apiRequest('/cities/create', { method: 'POST', body: JSON.stringify(cityData) }),
+        apiRequest('/cities/create', { method: 'POST', data: cityData }),
 
     /** Update a city by id. */
     update: (id: number, cityData: Partial<CityData>) =>
-        apiRequest(`/cities/${id}`, { method: 'PUT', body: JSON.stringify(cityData) }),
+        apiRequest(`/cities/${id}`, { method: 'PUT', data: cityData }),
 
     /** Update a city by id as admin (limited permissions). */
     updateAsAdmin: (id: number, cityData: Partial<CityData>) =>
-        apiRequest(`/cities/admin/${id}`, { method: 'PUT', body: JSON.stringify(cityData) }),
+        apiRequest(`/cities/admin/${id}`, { method: 'PUT', data: cityData }),
 
     /** Delete a city by id. */
     delete: (id: number) => apiRequest(`/cities/${id}`, { method: 'DELETE' }),
@@ -345,7 +334,7 @@ export const poisAPI = {
                 iconUrl: trimOrUndefined(poiData.iconUrl),
                 modelUrl: trimOrUndefined(poiData.modelUrl),
             });
-            return apiRequest('/pois/create', { method: 'POST', body: JSON.stringify(payload) });
+            return apiRequest('/pois/create', { method: 'POST', data: payload });
         }
     },
 
@@ -387,7 +376,7 @@ export const poisAPI = {
                 iconUrl: trimOrUndefined(poiData.iconUrl),
                 modelUrl: trimOrUndefined(poiData.modelUrl),
             });
-            return apiRequest('/pois/admin/create', { method: 'POST', body: JSON.stringify(payload) });
+            return apiRequest('/pois/admin/create', { method: 'POST', data: payload });
         }
     },
 
@@ -402,7 +391,7 @@ export const poisAPI = {
             iconUrl: poiData.iconUrl,
             modelUrl: poiData.modelUrl,
         });
-        return apiRequest(`/pois/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+        return apiRequest(`/pois/${id}`, { method: 'PUT', data: payload });
     },
 
     /** Update a POI by id as admin (JSON only). */
@@ -416,7 +405,7 @@ export const poisAPI = {
             iconUrl: poiData.iconUrl,
             modelUrl: poiData.modelUrl,
         });
-        return apiRequest(`/pois/admin/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+        return apiRequest(`/pois/admin/${id}`, { method: 'PUT', data: payload });
     },
 
     /** Delete a POI by id. */
@@ -444,7 +433,7 @@ export const adminsAPI = {
         }
         return apiRequest('/admins', {
             method: 'POST',
-            body: JSON.stringify(buildAdminJson(adminData)),
+            data: buildAdminJson(adminData),
         });
     },
 
@@ -455,7 +444,7 @@ export const adminsAPI = {
         }
         return apiRequest(`/admins/${id}`, {
             method: 'PUT',
-            body: JSON.stringify(buildAdminJson(adminData)),
+            data: buildAdminJson(adminData),
         });
     },
 

@@ -13,18 +13,18 @@ const Modal: React.FC<ModalProps> = ({ children, isOpen, onClose, title, hideHea
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center w-full h-full bg-black/40">
-            <div className="relative flex flex-col overflow-hidden bg-white rounded-lg shadow-lg max-h-[90vh] w-full max-w-lg mx-4">
+            <div className="relative flex flex-col overflow-hidden bg-white rounded-xl shadow-xl max-h-[90vh] w-full max-w-lg mx-4">
                 {/* Modal Header */}
                 {!hideHeader && (
                     <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                        <h1 className="font-medium text-gray-900 md:text-lg">{title}</h1>
+                        <h1 className="font-medium text-ynov-primary md:text-lg font-montserrat">{title}</h1>
                     </div>
                 )}
 
                 {/* Close Button */}
                 <button
                     type="button"
-                    className="text-gray-400 bg-transparent hover:text-gray-900 rounded-lg text-sm w-8 h-8 flex justify-center items-center absolute top-3.5 right-3.5 cursor-pointer"
+                    className="text-gray-400 bg-transparent hover:text-ynov-primary rounded-lg text-sm w-8 h-8 flex justify-center items-center absolute top-3.5 right-3.5 cursor-pointer transition-colors"
                     onClick={onClose}
                 >
                     <svg
