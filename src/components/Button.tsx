@@ -8,21 +8,21 @@ interface ButtonProps {
     type?: 'button' | 'submit' | 'reset';
 }
 
-const Button: React.FC<ButtonProps> = ({ 
-    label, 
-    className, 
-    onClick, 
+const Button: React.FC<ButtonProps> = ({
+    label,
+    className = '',
+    onClick,
     disabled = false,
     type = 'button'
 }) => {
     return (
-        <button 
+        <button
             type={type}
-            onClick={onClick} 
+            onClick={onClick}
             disabled={disabled}
             className={`bg-primary hover:bg-primary-light text-white text-sm font-normal py-2.5 px-4 rounded-lg shadow-lg transition-colors ${
                 disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
-            } ${className || ""}`}
+            } ${className}`}
         >
             {label}
         </button>

@@ -58,14 +58,21 @@ const CityDetailsContent: React.FC<CityDetailsContentProps> = ({ cityId }) => {
 
         try {
             setLoading(true);
+            setError(null);
 
             // Charger les détails de la ville
             const cityResponse = await citiesAPI.getById(parseInt(cityId));
             setCity(cityResponse as City);
 
             // Charger les POIs de cette ville
-            const poisResponse = await poisAPI.getByCity(parseInt(cityId));
-            setPois(Array.isArray(poisResponse) ? poisResponse : []);
+            try {
+                const poisResponse = await poisAPI.getByCity(parseInt(cityId));
+                setPois(Array.isArray(poisResponse) ? poisResponse : []);
+            } catch {
+                // Si erreur lors du chargement des POIs, on continue avec un tableau vide
+                console.log('Aucun POI trouvé pour cette ville ou erreur lors du chargement');
+                setPois([]);
+            }
 
         } catch (err) {
             console.error('Erreur lors du chargement des données de la ville:', err);
