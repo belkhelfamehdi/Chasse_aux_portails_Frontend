@@ -67,7 +67,7 @@ const AdminDashboardContent: React.FC = () => {
             type: 'city_updated',
             description: `Ville "${city.nom}" mise à jour`,
             timestamp: new Date(Date.now() - (index + 1) * 2 * 60 * 60 * 1000).toISOString(),
-            icon: <MapIcon className="w-5 h-5 text-blue-500" />
+            icon: <MapIcon className="w-5 h-5 text-brand-primary" />
           });
         });
       }
@@ -79,7 +79,7 @@ const AdminDashboardContent: React.FC = () => {
           type: 'poi_created',
           description: `Nouveau point d'intérêt ajouté`,
           timestamp: new Date(Date.now() - (i + 1) * 1.5 * 60 * 60 * 1000).toISOString(),
-          icon: <MapPinIcon className="w-5 h-5 text-green-500" />
+          icon: <MapPinIcon className="w-5 h-5 text-brand-primary" />
         });
       }
       
@@ -146,26 +146,26 @@ const AdminDashboardContent: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header avec informations de l'admin */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg p-6 text-white">
-        <h2 className="text-2xl font-bold mb-2">
+      <div className="p-6 text-white rounded-lg bg-gradient-to-r from-brand-primary to-brand-primary-dark">
+        <h2 className="mb-2 text-2xl font-bold">
           Bonjour, {user?.firstname} {user?.lastname}
         </h2>
-        <p className="text-blue-100">
+        <p className="text-white">
           Tableau de bord administrateur - Gérez vos villes et points d'intérêt
         </p>
       </div>
 
       {/* Statistiques de l'admin */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <MapIcon className="h-8 w-8 text-blue-600" />
+              <MapIcon className="w-8 h-8 text-brand-primary" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Mes Villes</p>
               {isLoading ? (
-                <div className="animate-pulse bg-gray-200 h-8 w-12 rounded"></div>
+                <div className="w-12 h-8 bg-gray-200 rounded animate-pulse"></div>
               ) : (
                 <p className="text-2xl font-bold text-gray-900">{stats.myCities}</p>
               )}
@@ -173,15 +173,15 @@ const AdminDashboardContent: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <MapPinIcon className="h-8 w-8 text-green-600" />
+              <MapPinIcon className="w-8 h-8 text-brand-primary" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Mes Points d'Intérêt</p>
               {isLoading ? (
-                <div className="animate-pulse bg-gray-200 h-8 w-12 rounded"></div>
+                <div className="w-12 h-8 bg-gray-200 rounded animate-pulse"></div>
               ) : (
                 <p className="text-2xl font-bold text-gray-900">{stats.myPOIs}</p>
               )}
@@ -190,31 +190,31 @@ const AdminDashboardContent: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Mes Villes */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Mes Villes</h3>
+        <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+          <h3 className="mb-4 text-lg font-medium text-gray-900">Mes Villes</h3>
           {isLoading ? (
             <div className="space-y-3">
-              <div className="animate-pulse flex space-x-3">
-                <div className="rounded-full bg-gray-200 h-10 w-10"></div>
-                <div className="flex-1 space-y-2 py-1">
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              <div className="flex space-x-3 animate-pulse">
+                <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                <div className="flex-1 py-1 space-y-2">
+                  <div className="w-3/4 h-4 bg-gray-200 rounded"></div>
+                  <div className="w-1/2 h-3 bg-gray-200 rounded"></div>
                 </div>
               </div>
-              <div className="animate-pulse flex space-x-3">
-                <div className="rounded-full bg-gray-200 h-10 w-10"></div>
-                <div className="flex-1 space-y-2 py-1">
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              <div className="flex space-x-3 animate-pulse">
+                <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                <div className="flex-1 py-1 space-y-2">
+                  <div className="w-3/4 h-4 bg-gray-200 rounded"></div>
+                  <div className="w-1/2 h-3 bg-gray-200 rounded"></div>
                 </div>
               </div>
-              <div className="animate-pulse flex space-x-3">
-                <div className="rounded-full bg-gray-200 h-10 w-10"></div>
-                <div className="flex-1 space-y-2 py-1">
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              <div className="flex space-x-3 animate-pulse">
+                <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                <div className="flex-1 py-1 space-y-2">
+                  <div className="w-3/4 h-4 bg-gray-200 rounded"></div>
+                  <div className="w-1/2 h-3 bg-gray-200 rounded"></div>
                 </div>
               </div>
             </div>
@@ -223,11 +223,11 @@ const AdminDashboardContent: React.FC = () => {
               {myCities.length > 0 ? (
                 <div className="space-y-3">
                   {myCities.slice(0, 5).map((city) => (
-                    <div key={city.id} className="flex items-center p-3 bg-gray-50 rounded-lg">
+                    <div key={city.id} className="flex items-center p-3 rounded-lg bg-gray-50">
                       <div className="flex-shrink-0">
-                        <MapIcon className="h-8 w-8 text-blue-500" />
+                        <MapIcon className="w-8 h-8 text-brand-primary" />
                       </div>
-                      <div className="ml-3 flex-1">
+                      <div className="flex-1 ml-3">
                         <p className="text-sm font-medium text-gray-900">{city.nom}</p>
                         <p className="text-xs text-gray-500">
                           {city.pois?.length || 0} point(s) d'intérêt
@@ -237,8 +237,8 @@ const AdminDashboardContent: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <MapIcon className="mx-auto h-12 w-12 text-gray-400" />
+                <div className="py-8 text-center">
+                  <MapIcon className="w-12 h-12 mx-auto text-gray-400" />
                   <h3 className="mt-2 text-sm font-medium text-gray-900">Aucune ville assignée</h3>
                   <p className="mt-1 text-sm text-gray-500">
                     Vous n'avez aucune ville à gérer pour le moment.
@@ -250,29 +250,29 @@ const AdminDashboardContent: React.FC = () => {
         </div>
 
         {/* Activités Récentes */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Activités Récentes</h3>
+        <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+          <h3 className="mb-4 text-lg font-medium text-gray-900">Activités Récentes</h3>
           {isLoadingActivities ? (
             <div className="space-y-3">
-              <div className="animate-pulse flex space-x-3">
-                <div className="rounded-full bg-gray-200 h-8 w-8"></div>
-                <div className="flex-1 space-y-2 py-1">
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              <div className="flex space-x-3 animate-pulse">
+                <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                <div className="flex-1 py-1 space-y-2">
+                  <div className="w-3/4 h-4 bg-gray-200 rounded"></div>
+                  <div className="w-1/2 h-3 bg-gray-200 rounded"></div>
                 </div>
               </div>
-              <div className="animate-pulse flex space-x-3">
-                <div className="rounded-full bg-gray-200 h-8 w-8"></div>
-                <div className="flex-1 space-y-2 py-1">
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              <div className="flex space-x-3 animate-pulse">
+                <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                <div className="flex-1 py-1 space-y-2">
+                  <div className="w-3/4 h-4 bg-gray-200 rounded"></div>
+                  <div className="w-1/2 h-3 bg-gray-200 rounded"></div>
                 </div>
               </div>
-              <div className="animate-pulse flex space-x-3">
-                <div className="rounded-full bg-gray-200 h-8 w-8"></div>
-                <div className="flex-1 space-y-2 py-1">
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              <div className="flex space-x-3 animate-pulse">
+                <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                <div className="flex-1 py-1 space-y-2">
+                  <div className="w-3/4 h-4 bg-gray-200 rounded"></div>
+                  <div className="w-1/2 h-3 bg-gray-200 rounded"></div>
                 </div>
               </div>
             </div>
@@ -293,8 +293,8 @@ const AdminDashboardContent: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <div className="mx-auto h-12 w-12 text-gray-400">
+                <div className="py-8 text-center">
+                  <div className="w-12 h-12 mx-auto text-gray-400">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>

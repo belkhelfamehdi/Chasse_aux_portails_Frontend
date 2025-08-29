@@ -92,7 +92,33 @@ const CityDetailsContent: React.FC<CityDetailsContentProps> = ({ cityId }) => {
         return `${Math.abs(lat).toFixed(4)}° ${latDir}, ${Math.abs(lng).toFixed(4)}° ${lngDir}`;
     };
 
-    const getIconForPOI = (poi: POI) => {
+    const getIconDisplay = (poi: POI) => {
+        // If POI has an uploaded icon, display it as an image
+        if (poi.iconUrl && poi.iconUrl.trim() !== '') {
+            return (
+                <img 
+                    src={poi.iconUrl} 
+                    alt={`Icon for ${poi.nom}`}
+                    className="object-cover w-8 h-8 border border-gray-200 rounded"
+                    onError={(e) => {
+                        // Fallback to emoji if image fails to load
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                            parent.innerHTML = getEmojiForPOI(poi);
+                            parent.className = "text-2xl";
+                        }
+                    }}
+                />
+            );
+        }
+        
+        // Fallback to emoji
+        return <span className="text-2xl">{getEmojiForPOI(poi)}</span>;
+    };
+
+    const getEmojiForPOI = (poi: POI) => {
         // Retourner des icônes spécifiques selon le screenshot
         const name = poi.nom.toLowerCase();
         if (name.includes('fountain') || name.includes('fontaine')) return '⛲';
@@ -202,7 +228,7 @@ const CityDetailsContent: React.FC<CityDetailsContentProps> = ({ cityId }) => {
     if (error || !city) {
         return (
             <div className="p-6">
-                <div className="min-h-96 flex flex-col items-center justify-center text-center gap-4">
+                <div className="flex flex-col items-center justify-center gap-4 text-center min-h-96">
                     <h2 className="text-2xl font-bold text-red-500">Erreur</h2>
                     <p className="text-gray-500">{error || 'Ville non trouvée'}</p>
                 </div>
@@ -221,39 +247,39 @@ const CityDetailsContent: React.FC<CityDetailsContentProps> = ({ cityId }) => {
             </div>
 
             {/* City Information Section */}
-            <div className="bg-white border border-gray-300 rounded mb-6">
+            <div className="mb-6 bg-white border border-gray-300 rounded">
                 <div className="px-5 py-4 border-b border-gray-300">
-                    <h2 className="text-lg font-semibold text-gray-800 m-0">
+                    <h2 className="m-0 text-lg font-semibold text-gray-800">
                         City Information
                     </h2>
                 </div>
 
                 <div className="p-5">
-                    <div className="grid grid-cols-2 gap-8 max-w-2xl">
+                    <div className="grid max-w-2xl grid-cols-2 gap-8">
                         <div>
-                            <div className="text-gray-600 text-xs font-medium mb-1">
+                            <div className="mb-1 text-xs font-medium text-gray-600">
                                 City Name
                             </div>
-                            <div className="text-gray-800 text-sm">
+                            <div className="text-sm text-gray-800">
                                 {city.nom}
                             </div>
                         </div>
 
                         <div>
-                            <div className="text-gray-600 text-xs font-medium mb-1">
+                            <div className="mb-1 text-xs font-medium text-gray-600">
                                 Coordinates
                             </div>
-                            <div className="text-gray-800 text-sm">
+                            <div className="text-sm text-gray-800">
                                 {formatCoordinates(city.latitude, city.longitude)}
                             </div>
                         </div>
                     </div>
 
-                    <div className="mt-6 max-w-xs">
-                        <div className="text-gray-600 text-xs font-medium mb-1">
+                    <div className="max-w-xs mt-6">
+                        <div className="mb-1 text-xs font-medium text-gray-600">
                             Radius
                         </div>
-                        <div className="text-gray-800 text-sm">
+                        <div className="text-sm text-gray-800">
                             {city.rayon} km
                         </div>
                     </div>
@@ -262,8 +288,8 @@ const CityDetailsContent: React.FC<CityDetailsContentProps> = ({ cityId }) => {
 
             {/* POIs Section */}
             <div className="bg-white border border-gray-300 rounded">
-                <div className="px-5 py-4 border-b border-gray-300 flex justify-between items-center">
-                    <h2 className="text-lg font-semibold text-gray-800 m-0">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-300">
+                    <h2 className="m-0 text-lg font-semibold text-gray-800">
                         Points d'interets (POIs)
                     </h2>
                     <Button
@@ -274,17 +300,17 @@ const CityDetailsContent: React.FC<CityDetailsContentProps> = ({ cityId }) => {
                 </div>
 
                 {pois.length === 0 ? (
-                    <div className="text-center py-12 px-5 text-gray-600 italic">
+                    <div className="px-5 py-12 italic text-center text-gray-600">
                         Aucun POI trouvé pour cette ville
                     </div>
                 ) : (
                     <div>
                         {/* Table Header */}
-                        <div className="grid grid-cols-12 gap-4 px-5 py-3 bg-gray-50 border-b border-gray-300 text-xs font-semibold text-gray-700">
+                        <div className="grid grid-cols-12 gap-4 px-5 py-3 text-xs font-semibold text-gray-700 border-b border-gray-300 bg-gray-50">
+                            <div className="col-span-1">Icon</div>
                             <div className="col-span-2">Name</div>
                             <div className="col-span-3">Description</div>
                             <div className="col-span-2">Coordinates</div>
-                            <div className="col-span-1">Icon</div>
                             <div className="col-span-1">3D Model</div>
                             <div className="col-span-3">Actions</div>
                         </div>
@@ -293,26 +319,26 @@ const CityDetailsContent: React.FC<CityDetailsContentProps> = ({ cityId }) => {
                         {pois.map((poi, index) => (
                             <div key={poi.id} className={`grid grid-cols-12 gap-4 px-5 py-4 items-center ${index < pois.length - 1 ? 'border-b border-gray-100' : ''
                                 } ${index % 2 === 1 ? 'bg-gray-25' : 'bg-white'} hover:bg-gray-50 transition-colors`}>
-                                <div className="col-span-2 text-sm text-gray-800 font-medium">
+                                <div className="col-span-1 text-xl text-center">
+                                    {getIconDisplay(poi)}
+                                </div>
+                                <div className="col-span-2 text-sm font-medium text-gray-800">
                                     {poi.nom}
                                 </div>
-                                <div className="col-span-3 text-sm text-cyan-600 leading-relaxed">
+                                <div className="col-span-3 text-sm leading-relaxed text-cyan-600">
                                     {poi.description}
                                 </div>
-                                <div className="col-span-2 text-xs text-cyan-600 font-mono font-medium">
+                                <div className="col-span-2 font-mono text-xs font-medium text-cyan-600">
                                     {formatCoordinates(poi.latitude, poi.longitude)}
-                                </div>
-                                <div className="col-span-1 text-xl text-center">
-                                    {getIconForPOI(poi)}
                                 </div>
                                 <div className="col-span-1 text-center">
                                     {poi.modelUrl && poi.modelUrl.trim().length > 0 && poi.modelUrl !== '' ? (
                                         <button
                                             onClick={() => open3DViewer(poi)}
-                                            className="flex items-center justify-center w-8 h-8 bg-blue-100 border border-blue-200 rounded-lg hover:bg-blue-200 transition-colors cursor-pointer"
+                                            className="flex items-center justify-center w-8 h-8 transition-colors bg-blue-100 border border-blue-200 rounded-lg cursor-pointer hover:bg-blue-200"
                                             title={`Voir le modèle 3D: ${poi.modelUrl}`}
                                         >
-                                            <div className="w-4 h-4 bg-blue-500 rounded transform rotate-12"></div>
+                                            <div className="w-4 h-4 transform bg-blue-500 rounded rotate-12"></div>
                                         </button>
                                     ) : (
                                         <div className="flex items-center justify-center w-8 h-8 bg-gray-100 border border-gray-200 rounded-lg" title="Pas de modèle 3D disponible">
@@ -323,14 +349,14 @@ const CityDetailsContent: React.FC<CityDetailsContentProps> = ({ cityId }) => {
                                 <div className="col-span-3">
                                     <button 
                                         onClick={() => handleEditPOI(poi)}
-                                        className="text-blue-600 text-xs underline mr-1 hover:text-blue-800 transition-colors cursor-pointer bg-transparent border-none"
+                                        className="mr-1 text-xs text-blue-600 underline transition-colors bg-transparent border-none cursor-pointer hover:text-blue-800"
                                     >
                                         Edit
                                     </button>
-                                    <span className="text-blue-600 text-xs mx-1">|</span>
+                                    <span className="mx-1 text-xs text-blue-600">|</span>
                                     <button 
                                         onClick={() => handleDeletePOI(poi)}
-                                        className="text-blue-600 text-xs underline ml-1 hover:text-blue-800 transition-colors cursor-pointer bg-transparent border-none"
+                                        className="ml-1 text-xs text-blue-600 underline transition-colors bg-transparent border-none cursor-pointer hover:text-blue-800"
                                     >
                                         Delete
                                     </button>

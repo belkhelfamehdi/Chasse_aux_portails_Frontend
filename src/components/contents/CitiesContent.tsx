@@ -182,8 +182,8 @@ const SuperAdminCitiesContent: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-ynov-primary font-montserrat">Gestion des villes</h1>
-          <p className="text-ynov-secondary mt-1 font-source-sans">
+          <h1 className="text-2xl font-bold text-[#23b2a4] font-montserrat">Gestion des villes</h1>
+          <p className="text-[#1d1d1e] mt-1 font-source-sans">
             {getSubtitleText()}
           </p>
         </div>
@@ -201,16 +201,16 @@ const SuperAdminCitiesContent: React.FC = () => {
           <table className="min-w-full">
             <thead className="border-b border-gray-200 bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-sm font-medium text-left text-ynov-primary font-source-sans">
+                <th className="px-6 py-3 text-sm font-medium text-left text-[#23b2a4] font-source-sans">
                   Nom
                 </th>
-                <th className="px-6 py-3 text-sm font-medium text-left text-ynov-primary font-source-sans">
+                <th className="px-6 py-3 text-sm font-medium text-left text-[#23b2a4] font-source-sans">
                   Coordonnées
                 </th>
-                <th className="px-6 py-3 text-sm font-medium text-left text-ynov-primary font-source-sans">
+                <th className="px-6 py-3 text-sm font-medium text-left text-[#23b2a4] font-source-sans">
                   Rayon
                 </th>
-                <th className="px-6 py-3 text-sm font-medium text-right text-ynov-primary font-source-sans">
+                <th className="px-6 py-3 text-sm font-medium text-right text-[#23b2a4] font-source-sans">
                   Actions
                 </th>
               </tr>
@@ -218,10 +218,10 @@ const SuperAdminCitiesContent: React.FC = () => {
             <tbody className="divide-y divide-gray-200">
               {cities.map((city) => (
                 <tr key={city.id} className="hover:bg-gray-50 transition-colors duration-150">
-                  <td className="px-6 py-4 text-sm font-medium text-ynov-primary font-source-sans">
+                  <td className="px-6 py-4 text-sm font-medium text-[#1d1d1e] font-source-sans">
                     <button
                       onClick={() => navigate(`/cities/${city.id}`)}
-                      className="text-ynov-secondary hover:text-primary underline font-medium cursor-pointer transition-colors duration-150"
+                      className="text-[#23b2a4] hover:text-[#1a8a7f] underline font-medium cursor-pointer transition-colors duration-150"
                       title={`Voir les détails de ${city.nom}`}
                     >
                       {city.nom}
@@ -238,16 +238,16 @@ const SuperAdminCitiesContent: React.FC = () => {
                       <button
                         title="Modifier"
                         onClick={() => openEdit(city)}
-                        className="text-ynov-secondary hover:text-blue-600 font-semibold transition-colors duration-150 cursor-pointer font-source-sans"
+                        className="text-[#23b2a4] hover:text-[#1a8a7f] font-semibold transition-colors duration-150 cursor-pointer font-source-sans"
                       >
                         <span className="text-sm">Modifier</span>
                       </button>
-                      <span className="text-ynov-secondary font-semibold">|</span>
+                      <span className="text-[#1d1d1e] font-semibold">|</span>
                       <button
                         title="Supprimer"
                         onClick={() => handleDeleteCity(city)}
                         disabled={isDeleting === city.id}
-                        className="text-ynov-secondary hover:text-red-600 font-semibold transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-source-sans"
+                        className="text-[#1d1d1e] hover:text-red-600 font-semibold transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-source-sans"
                       >
                         {isDeleting === city.id ? (
                           <Loading size="sm" />

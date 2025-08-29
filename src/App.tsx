@@ -7,6 +7,7 @@ import DashboardContent from './components/contents/DashboardContent';
 import CitiesContent from './components/contents/CitiesContent';
 import POIsContent from './components/contents/POIsContent';
 import AdminsContent from './components/contents/AdminsContent';
+import SettingsContent from './components/contents/SettingsContent';
 import Layout from './components/Layout';
 import CityDetailsPage from './pages/CityDetails/CityDetailsPage';
 
@@ -36,7 +37,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/settings" element={<div>Page de Paramètres (Bientôt Disponible)</div>} />
+              <Route path="/settings" element={<SettingsContent />} />
             </Route>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

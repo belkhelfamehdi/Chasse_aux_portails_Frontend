@@ -161,8 +161,8 @@ export default function AdminsContent() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-ynov-primary font-montserrat">Administrateurs</h1>
-          <p className="text-sm text-ynov-secondary font-source-sans">Gérer les administrateurs</p>
+          <h1 className="text-2xl font-bold text-[#23b2a4] font-montserrat">Administrateurs</h1>
+          <p className="text-sm text-[#1d1d1e] font-source-sans">Gérer les administrateurs</p>
         </div>
       </div>
 
@@ -192,13 +192,13 @@ export default function AdminsContent() {
         <table className="min-w-full">
           <thead className="border-b border-gray-200 bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-sm font-medium text-left text-ynov-primary font-source-sans">
+              <th className="px-6 py-3 text-sm font-medium text-left text-[#23b2a4] font-source-sans">
                 Nom
               </th>
-              <th className="px-6 py-3 text-sm font-medium text-left text-ynov-primary font-source-sans">
+              <th className="px-6 py-3 text-sm font-medium text-left text-[#23b2a4] font-source-sans">
                 Email
               </th>
-              <th className="px-6 py-3 text-sm font-medium text-right text-ynov-primary font-source-sans">
+              <th className="px-6 py-3 text-sm font-medium text-right text-[#23b2a4] font-source-sans">
                 Actions
               </th>
             </tr>

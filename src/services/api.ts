@@ -256,6 +256,24 @@ export const authAPI = {
     /** Request a new access token using the refresh cookie. */
     refreshToken: (): Promise<{ accessToken: string; user?: User }> =>
         apiRequest<{ accessToken: string; user?: User }>('/auth/refresh', { method: 'POST' }),
+
+    /** Change password for the current user. */
+    changePassword: (passwordData: { currentPassword: string; newPassword: string }): Promise<{ message: string }> =>
+        apiRequest<{ message: string }>('/auth/change-password', {
+            method: 'PUT',
+            data: passwordData,
+        }),
+
+    /** Update profile picture for the current user. */
+    updateProfilePicture: (file: File): Promise<{ message: string; user: User }> => {
+        const formData = new FormData();
+        formData.append('profilePicture', file);
+        
+        return apiRequest<{ message: string; user: User }>('/auth/profile-picture', {
+            method: 'PUT',
+            data: formData,
+        });
+    },
 };
 
 /** Cities endpoints */

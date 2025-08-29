@@ -197,7 +197,7 @@ const SuperAdminPOIsContent = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-ynov-primary font-montserrat">Points d'Intérêt</h1>
+          <h1 className="text-2xl font-bold text-[#23b2a4] font-montserrat">Points d'Intérêt</h1>
           <p className="text-sm text-primary">Gérer les points d'intérêt pour la ville sélectionnée.</p>
         </div>
       </div>
@@ -212,7 +212,7 @@ const SuperAdminPOIsContent = () => {
               placeholder="Rechercher des points d'intérêt"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full py-2 pl-10 pr-3 text-sm text-gray-700 placeholder-gray-400 border border-gray-200 rounded-xl focus:outline-none focus:border-ynov-secondary focus:ring-1 focus:ring-ynov-secondary font-source-sans"
+              className="w-full py-2 pl-10 pr-3 text-sm text-gray-700 placeholder-gray-400 border border-gray-200 rounded-xl focus:outline-none focus:border-[#1d1d1e] focus:ring-1 focus:ring-[#1d1d1e] font-source-sans"
             />
           </div>
         </div>
@@ -224,10 +224,13 @@ const SuperAdminPOIsContent = () => {
       </div>
 
       {/* POI Table */}
-      <div className="overflow-hidden bg-white border border-gray-200 rounded-xl shadow-sm">
+      <div className="overflow-hidden bg-white border border-gray-200 shadow-sm rounded-xl">
         <table className="min-w-full">
           <thead className="border-b border-gray-200 bg-gray-50">
             <tr>
+              <th className="px-6 py-3 text-sm font-medium text-center text-gray-500">
+                Icône
+              </th>
               <th className="px-6 py-3 text-sm font-medium text-left text-gray-500">
                 Nom
               </th>
@@ -239,9 +242,6 @@ const SuperAdminPOIsContent = () => {
               </th>
               <th className="px-6 py-3 text-sm font-medium text-left text-gray-500">
                 Coordonnées
-              </th>
-              <th className="px-6 py-3 text-sm font-medium text-center text-gray-500">
-                Icône
               </th>
               <th className="px-6 py-3 text-sm font-medium text-center text-gray-500">
                 Modèle 3D
@@ -261,13 +261,18 @@ const SuperAdminPOIsContent = () => {
             ) : (
               filteredPOIs.map((poi) => (
                 <tr key={poi.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 text-center">
+                    <div className="flex justify-center">
+                      {getIconDisplay(poi.iconUrl)}
+                    </div>
+                  </td>
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">
                     {poi.nom}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
                     {poi.description}
                   </td>
-                  <td className="px-6 py-4 text-sm text-primary font-medium">
+                  <td className="px-6 py-4 text-sm font-medium text-primary">
                     {poi.city?.nom || `Ville ID: ${poi.cityId}`}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
@@ -277,19 +282,14 @@ const SuperAdminPOIsContent = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <div className="flex flex-col items-center space-y-2">
-                      {getIconDisplay(poi.iconUrl)}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-center">
                     {poi.modelUrl && poi.modelUrl.trim().length > 0 && poi.modelUrl !== '' ? (
                       <div className="flex flex-col items-center space-y-1">
                         <button
                           onClick={() => open3DViewer(poi)}
-                          className="flex items-center justify-center w-10 h-10 bg-ynov-secondary/10 border border-ynov-secondary/20 rounded-lg hover:bg-ynov-secondary hover:border-ynov-secondary transition-colors cursor-pointer group"
+                          className="flex items-center justify-center w-10 h-10 bg-[#1d1d1e]/10 border border-[#1d1d1e]/20 rounded-lg hover:bg-[#1d1d1e] hover:border-[#1d1d1e] transition-colors cursor-pointer group"
                           title={`Voir le modèle 3D: ${poi.modelUrl}`}
                         >
-                          <div className="w-5 h-5 bg-blue-500 rounded transform rotate-12"></div>
+                          <div className="w-5 h-5 transform bg-blue-500 rounded rotate-12"></div>
                         </button>
                       </div>
                     ) : (
@@ -305,7 +305,7 @@ const SuperAdminPOIsContent = () => {
                       <button
                         title="Modifier"
                         onClick={() => openEdit(poi)}
-                        className="text-link transition-colors cursor-pointer"
+                        className="transition-colors cursor-pointer text-link"
                       >
                         <span className="text-sm">Modifier</span>
                       </button>
@@ -314,7 +314,7 @@ const SuperAdminPOIsContent = () => {
                         title="Supprimer"
                         onClick={() => handleDeletePOI(poi)}
                         disabled={isDeleting === poi.id}
-                        className="text-link transition-colors cursor-pointer disabled:opacity-50"
+                        className="transition-colors cursor-pointer text-link disabled:opacity-50"
                       >
                         {isDeleting === poi.id ? (
                           <Loading size="sm" />

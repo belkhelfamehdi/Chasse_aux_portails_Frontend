@@ -17,14 +17,14 @@ const Modal: React.FC<ModalProps> = ({ children, isOpen, onClose, title, hideHea
                 {/* Modal Header */}
                 {!hideHeader && (
                     <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                        <h1 className="font-medium text-ynov-primary md:text-lg font-montserrat">{title}</h1>
+                        <h1 className="font-medium text-[#23b2a4] md:text-lg font-montserrat">{title}</h1>
                     </div>
                 )}
 
                 {/* Close Button */}
                 <button
                     type="button"
-                    className="text-gray-400 bg-transparent hover:text-ynov-primary rounded-lg text-sm w-8 h-8 flex justify-center items-center absolute top-3.5 right-3.5 cursor-pointer transition-colors"
+                    className="text-gray-400 bg-transparent hover:text-[#23b2a4] rounded-lg text-sm w-8 h-8 flex justify-center items-center absolute top-3.5 right-3.5 cursor-pointer transition-colors"
                     onClick={onClose}
                 >
                     <svg

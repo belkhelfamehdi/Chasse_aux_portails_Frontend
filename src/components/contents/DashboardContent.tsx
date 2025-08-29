@@ -203,12 +203,12 @@ const SuperAdminDashboardContent: React.FC = () => {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <div className="flex items-center justify-center w-8 h-8 rounded-lg">
-                <MapIcon className="h-auto w-7 text-ynov-secondary" />
+                <MapIcon className="h-auto w-7 text-[#1d1d1e]" />
               </div>
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500 font-source-sans">Total des Villes</p>
-              <p className="text-xl font-semibold text-ynov-primary font-montserrat">
+              <p className="text-xl font-semibold text-[#23b2a4] font-montserrat">
                 {isLoading ? (
                   <span className="inline-flex items-center">
                     <svg className="w-4 h-4 animate-spin mr-1" fill="none" viewBox="0 0 24 24">
@@ -227,12 +227,12 @@ const SuperAdminDashboardContent: React.FC = () => {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <div className="flex items-center justify-center w-8 h-8 rounded-lg">
-                <MapPinIcon className="h-auto w-7 text-ynov-secondary" />
+                <MapPinIcon className="h-auto w-7 text-[#1d1d1e]" />
               </div>
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500 font-source-sans">Total Points d'Intérêt</p>
-              <p className="text-xl font-semibold text-ynov-primary font-montserrat">
+              <p className="text-xl font-semibold text-[#23b2a4] font-montserrat">
                 {isLoading ? (
                   <span className="inline-flex items-center">
                     <svg className="w-4 h-4 animate-spin mr-1" fill="none" viewBox="0 0 24 24">
@@ -251,12 +251,12 @@ const SuperAdminDashboardContent: React.FC = () => {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <div className="flex items-center justify-center w-8 h-8 rounded-lg">
-                <UsersIcon className="h-auto w-7 text-ynov-secondary" />
+                <UsersIcon className="h-auto w-7 text-[#1d1d1e]" />
               </div>
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500 font-source-sans">Administrateurs</p>
-              <p className="text-xl font-semibold text-ynov-primary font-montserrat">
+              <p className="text-xl font-semibold text-[#23b2a4] font-montserrat">
                 {isLoading ? (
                   <span className="inline-flex items-center">
                     <svg className="w-4 h-4 animate-spin mr-1" fill="none" viewBox="0 0 24 24">
@@ -277,7 +277,7 @@ const SuperAdminDashboardContent: React.FC = () => {
         {/* Recent Activities */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-montserrat font-semibold text-ynov-primary">Activités récentes</h3>
+            <h3 className="text-lg font-montserrat font-semibold text-[#23b2a4]">Activités récentes</h3>
           </div>
           <div className="p-6">
             {isLoadingActivities ? (
@@ -335,7 +335,7 @@ const SuperAdminDashboardContent: React.FC = () => {
         {/* Active Admins */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-montserrat font-semibold text-ynov-primary">Administrateurs Actifs</h3>
+            <h3 className="text-lg font-montserrat font-semibold text-[#23b2a4]">Administrateurs Actifs</h3>
           </div>
           <div className="p-6">
             {isLoadingAdmins ? (

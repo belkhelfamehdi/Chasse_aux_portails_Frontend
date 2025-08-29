@@ -123,7 +123,7 @@ const AdminCitiesContent: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-ynov-primary font-montserrat">Mes Villes</h2>
-          <p className="text-ynov-secondary font-source-sans">Gérez les villes qui vous sont assignées</p>
+          <p className="text-[#1d1d1e] font-source-sans">Gérez les villes qui vous sont assignées</p>
         </div>
       </div>
 
